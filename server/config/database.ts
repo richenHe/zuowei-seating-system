@@ -6,11 +6,11 @@ dotenv.config();
 
 // PostgreSQL数据库连接配置 - 支持内网和外网连接
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'zuowei-postgresql.ns-9zwbf7z.svc',
   port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'zuowei_db',
+  database: process.env.DB_NAME || 'postgres',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || 'xhzpk9wm',
   // SSL配置（根据环境变量决定是否启用）
   ssl: process.env.DB_SSL === 'true' ? {
     rejectUnauthorized: false    // 允许自签名证书

@@ -25,11 +25,14 @@ echo "✅ NPM 版本: $NPM_VERSION"
 # 检查环境变量配置
 echo "🔧 检查环境配置..."
 if [ ! -f ".env" ]; then
-    if [ -f "production.env.template" ]; then
+    if [ -f "server.env" ]; then
+        echo "📋 使用Sealos服务器配置..."
+        cp server.env .env
+        echo "✅ 已配置Sealos内网数据库连接"
+    elif [ -f "production.env.template" ]; then
         echo "📋 使用生产环境配置模板..."
         cp production.env.template .env
-        echo "⚠️ 请编辑 .env 文件填入正确的数据库配置！"
-        echo "💡 注意：不要在 .env 文件中设置 NODE_ENV，构建时会自动处理"
+        echo "✅ 已配置数据库连接信息"
     else
         echo "⚠️ 未找到环境配置文件和模板"
         echo "💡 请手动创建 .env 文件"
