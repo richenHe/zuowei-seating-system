@@ -89,3 +89,6 @@ echo "------------------------------------"
 
 # 使用 node 直接运行构建后的服务器
 exec node dist-server/server/index.js
+
+
+

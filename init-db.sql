@@ -25,3 +25,6 @@ CREATE DATABASE zuowei_db
 
 -- 验证连接
 SELECT 'Database zuowei_db created successfully!' as status;
+
+
+
