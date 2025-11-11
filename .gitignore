@@ -45,6 +45,9 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
 # Runtime data
 pids/
 *.pid
@@ -64,6 +67,9 @@ coverage/
 
 # Optional eslint cache
 .eslintcache
+
+# Optional stylelint cache
+.stylelintcache
 
 # Optional REPL history
 .node_repl_history
@@ -115,3 +121,7 @@ docs/generated/
 
 # Vue.js specific
 .vite/
+
+# Vite logs files
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
