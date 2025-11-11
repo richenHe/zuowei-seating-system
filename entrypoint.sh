@@ -30,10 +30,16 @@ fi
 
 echo "✅ Node.js 版本: $(node -v)"
 
-# 检查环境配置文件
+# 检查和创建环境配置文件
 if [ ! -f ".env" ]; then
-    echo "⚠️ 未找到 .env 文件，使用默认配置"
-    echo "💡 建议创建 .env 文件配置数据库连接"
+    if [ -f "server.env" ]; then
+        echo "📋 使用服务器配置 server.env"
+        cp server.env .env
+        echo "✅ 环境配置已设置"
+    else
+        echo "⚠️ 未找到环境配置文件"
+        echo "💡 应用将使用代码中的默认配置"
+    fi
 fi
 
 # 设置生产环境

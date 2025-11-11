@@ -93,41 +93,55 @@ zuowei-seating-system/
 
 ## 🌐 部署指南
 
-### Sealos DevBox 部署（推荐）
+### 🚀 Sealos DevBox 部署（推荐）
 
-**步骤1: 本地构建**
+**本项目已完全配置好 Sealos DevBox 一键部署！**
+
+#### 准备工作
+项目包含预配置的环境文件 `server.env`，包含正确的数据库连接信息。
+
+#### 部署步骤
+
+**1. 克隆项目到DevBox**
 ```bash
-# 在本地或开发环境执行完整构建
-bash build-and-deploy.sh
+git clone https://github.com/richenHe/zuowei-seating-system.git
+cd zuowei-seating-system
 ```
 
-**步骤2: DevBox启动**
+**2. 构建项目**
 ```bash
-# 在Sealos DevBox中启动应用
+# 安装依赖
+npm install
+
+# 构建前端和后端
+npm run build
+```
+
+**3. 启动应用**
+```bash
+# 使用Sealos标准启动脚本
 bash entrypoint.sh
 ```
 
-### 手动部署
-```bash
-# 构建项目
-npm run build
+#### 验证部署
+- 📡 健康检查: `http://your-domain/api/health`
+- 🌐 应用访问: `http://your-domain`
 
-# 启动生产服务
-NODE_ENV=production node dist-server/server/index.js
-```
+### 📊 系统要求
+- Node.js 18.x+
+- PostgreSQL 12+（已配置内网连接）
+- 内存: 1GB+
 
-### Docker 部署
-```bash
-# 构建镜像
-docker build -t zuowei-app .
+### 🔧 故障排除
 
-# 运行容器
-docker run -d -p 3000:3000 zuowei-app
-```
+**数据库连接问题：**
+检查 `server.env` 文件是否存在，包含正确的数据库配置。
 
-详细部署说明请参考：
-- 📋 [DevBox 部署指南](./DEVBOX-DEPLOY.md)
-- 📋 [完整部署文档](./README-DEPLOYMENT.md)
+**端口占用：**
+默认端口3000，可通过环境变量 `PORT` 修改。
+
+**构建失败：**
+确保 Node.js 版本 ≥ 18.0.0，删除 `node_modules` 重新安装。
 
 ## 🔗 API 接口
 
