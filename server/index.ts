@@ -64,8 +64,8 @@ app.get('/api/health', async (req, res) => {
 
 // 生产环境静态文件服务
 if (process.env.NODE_ENV === 'production') {
-  // 服务前端打包后的静态文件
-  const distPath = path.join(__dirname, '../dist');
+  // 服务前端打包后的静态文件 - 修复编译后的路径问题
+  const distPath = path.join(__dirname, '../../dist');
   app.use(express.static(distPath));
   
   // SPA路由处理 - 所有非API路由都返回index.html
@@ -127,14 +127,14 @@ async function startServer() {
     console.log('🗄️ 初始化数据库结构...');
     await initializeDatabase();
 
-    // 启动HTTP服务器
-    app.listen(PORT, () => {
+    // 启动HTTP服务器 - 监听所有网络接口以支持容器部署
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 排座位表系统启动成功！`);
-      console.log(`📡 后端服务: http://localhost:${PORT}`);
-      console.log(`🔍 健康检查: http://localhost:${PORT}/api/health`);
+      console.log(`📡 后端服务: http://0.0.0.0:${PORT}`);
+      console.log(`🔍 健康检查: http://0.0.0.0:${PORT}/api/health`);
       
       if (process.env.NODE_ENV === 'production') {
-        console.log(`🌐 前端页面: http://localhost:${PORT}`);
+        console.log(`🌐 前端页面: http://0.0.0.0:${PORT}`);
       } else {
         console.log(`🛠️ 前端开发: http://localhost:5173`);
       }

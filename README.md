@@ -93,8 +93,17 @@ zuowei-seating-system/
 
 ## 🌐 部署指南
 
-### DevBox 一键部署
+### Sealos DevBox 部署（推荐）
+
+**步骤1: 本地构建**
 ```bash
+# 在本地或开发环境执行完整构建
+bash build-and-deploy.sh
+```
+
+**步骤2: DevBox启动**
+```bash
+# 在Sealos DevBox中启动应用
 bash entrypoint.sh
 ```
 
@@ -104,7 +113,7 @@ bash entrypoint.sh
 npm run build
 
 # 启动生产服务
-npm run start:prod
+NODE_ENV=production node dist-server/server/index.js
 ```
 
 ### Docker 部署
