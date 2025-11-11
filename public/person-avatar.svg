@@ -1,0 +1,44 @@
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 头像背景圆形 -->
+  <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:var(--avatar-bg, #dbeafe);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:var(--avatar-bg, #bfdbfe);stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:var(--avatar-border, #3b82f6);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:var(--avatar-border, #2563eb);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 人物头像 -->
+  <g transform="translate(30, 30)">
+    <!-- 头部 -->
+    <circle cx="0" cy="-8" r="10" fill="var(--skin-color, #fbbf24)" opacity="0.9"/>
+    
+    <!-- 眼睛 -->
+    <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
+    <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
+    
+    <!-- 嘴巴 -->
+    <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
+    
+    <!-- 身体 -->
+    <rect x="-8" y="2" width="16" height="18" rx="8" fill="var(--shirt-color, #60a5fa)" opacity="0.9"/>
+    
+    <!-- 领子 -->
+    <path d="M -6 2 L 0 8 L 6 2" fill="var(--collar-color, #3b82f6)" opacity="0.8"/>
+    
+    <!-- 装饰细节 -->
+    <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
+    <circle cx="0" cy="12" r="0.8" fill="rgba(255,255,255,0.4)"/>
+  </g>
+  
+  <!-- 在线状态指示器 -->
+  <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
+  <circle cx="48" cy="12" r="3" fill="#ffffff"/>
+</svg>

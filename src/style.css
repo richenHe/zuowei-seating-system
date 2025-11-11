@@ -1,0 +1,303 @@
+/* 全局样式 - 排座位表系统 */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* shadcn-vue CSS变量 */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+/* 基础样式重置和全局设置 */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* 自定义工具类 */
+@layer utilities {
+  /* 拖拽相关样式 */
+  .draggable {
+    cursor: grab;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .draggable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .dragging {
+    opacity: 0.6;
+    transform: scale(0.95) rotate(5deg);
+    z-index: 1000;
+  }
+  
+  .drop-zone {
+    transition: all 0.2s ease;
+  }
+  
+  .drop-zone.drag-over {
+    @apply ring-2 ring-primary ring-opacity-50 bg-primary/5;
+  }
+  
+  /* 🎯 座位卡片样式（圆桌环形座位专用）*/
+  .seat-card {
+    @apply bg-white border-2 border-gray-200 rounded-lg p-2 text-center text-sm font-medium transition-all duration-200 cursor-pointer;
+    min-height: 65px;
+    min-width: 65px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: rotate(0deg); /* 重置子元素旋转，确保文字水平显示 */
+  }
+  
+  .seat-card.occupied {
+    @apply bg-primary text-primary-foreground border-primary;
+  }
+  
+  .seat-card.empty {
+    @apply bg-gray-50 border-dashed border-gray-300 text-gray-400;
+  }
+  
+  .seat-card:hover {
+    @apply shadow-md transform -translate-y-1;
+  }
+  
+  /* 🪑 圆桌环形布局（完全按照用户手绘图实现）- 最高优先级 */
+  .seating-layout .desk-container {
+    position: relative !important;
+    width: 260px !important;
+    height: 260px !important;
+    margin: 20px auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+  }
+  
+  .seating-layout .desk-table {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90px !important;
+    height: 90px !important;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+    border: 3px solid #cbd5e1 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    font-size: 14px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    z-index: 1 !important;
+  }
+  
+  /* ⭕ 8个座位完美环形分布 - 超强优先级覆盖所有样式 */
+  .seating-layout .desk-container .seat-card.seat-0 { 
+    position: absolute !important; 
+    top: -35px !important; 
+    left: 50% !important; 
+    transform: translateX(-50%) !important;
+    z-index: 10 !important;
+  }
+  .seating-layout .desk-container .seat-card.seat-1 { 
+    position: absolute !important; 
+    top: -20px !important; 
+    right: -20px !important;
+    z-index: 10 !important;
+  }
+  .seating-layout .desk-container .seat-card.seat-2 { 
+    position: absolute !important; 
+    top: 50% !important; 
+    right: -35px !important; 
+    transform: translateY(-50%) !important;
+    z-index: 10 !important;
+  }
+  .seating-layout .desk-container .seat-card.seat-3 { 
+    position: absolute !important; 
+    bottom: -20px !important; 
+    right: -20px !important;
+    z-index: 10 !important;
+  }
+  .seating-layout .desk-container .seat-card.seat-4 { 
+    position: absolute !important; 
+    bottom: -35px !important; 
+    left: 50% !important; 
+    transform: translateX(-50%) !important;
+    z-index: 10 !important;
+  }
+  .seating-layout .desk-container .seat-card.seat-5 { 
+    position: absolute !important; 
+    bottom: -20px !important; 
+    left: -20px !important;
+    z-index: 10 !important;
+  }
+  .seating-layout .desk-container .seat-card.seat-6 { 
+    position: absolute !important; 
+    top: 50% !important; 
+    left: -35px !important; 
+    transform: translateY(-50%) !important;
+    z-index: 10 !important;
+  }
+  .seating-layout .desk-container .seat-card.seat-7 { 
+    position: absolute !important; 
+    top: -20px !important; 
+    left: -20px !important;
+    z-index: 10 !important;
+  }
+  
+  /* 动画效果 */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .bounce-in {
+    animation: bounceIn 0.4s ease-out;
+  }
+  
+  /* 响应式隐藏 */
+  .mobile-hidden {
+    @apply hidden md:block;
+  }
+  
+  .mobile-only {
+    @apply block md:hidden;
+  }
+}
+
+/* 动画关键帧 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 滚动条样式 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--accent-foreground));
+}
+
+/* 加载状态 */
+.loading-spinner {
+  @apply animate-spin rounded-full border-4 border-gray-300 border-t-primary;
+}
+
+/* 错误状态 */
+.error-message {
+  @apply bg-destructive/10 text-destructive border border-destructive/20 rounded-md p-3;
+}
+
+/* 成功状态 */
+.success-message {
+  @apply bg-green-50 text-green-800 border border-green-200 rounded-md p-3;
+}

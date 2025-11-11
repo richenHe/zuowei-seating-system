@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 座椅靠背 -->
+  <rect x="5" y="4" width="14" height="8" rx="2" fill="#3b82f6"/>
+  <!-- 座椅座位 -->
+  <rect x="6" y="10" width="12" height="6" rx="1" fill="#60a5fa"/>
+  <!-- 座椅腿 -->
+  <rect x="7" y="16" width="2" height="4" fill="#1e40af"/>
+  <rect x="15" y="16" width="2" height="4" fill="#1e40af"/>
+  <!-- 装饰线 -->
+  <line x1="5" y1="8" x2="19" y2="8" stroke="white" stroke-width="1" opacity="0.5"/>
+</svg>

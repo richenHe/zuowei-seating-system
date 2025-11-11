@@ -1,0 +1,155 @@
+---
+alwaysApply: true
+---
+# Cursor IDE 编码规范配置文件
+
+## 项目类型
+这是一个基于Vue 3 + TypeScript + Express.js的全栈座位管理系统项目。
+
+## 核心技术栈
+- 前端：Vue 3, TypeScript, Vite, Tailwind CSS, shadcn-vue
+- 后端：Node.js, Express.js, TypeScript, PostgreSQL
+- 工具：tsx, concurrently, cors, dotenv
+
+## 编码规范
+
+### Vue 组件规范
+1. **模板语法检查**：
+   - 确保所有HTML标签正确闭合，特别是div、template、script标签
+   - **标签结构验证**：每添加一个开始标签，立即添加对应的结束标签
+   - **嵌套层级检查**：修改嵌套结构时，逐层验证每个容器的开始/结束标签对应关系
+   - **保存前强制检查**：每次保存.vue文件前，必须确认没有"Element is missing end tag"错误
+   - 使用语义化的HTML标签名称
+   - 避免过深的嵌套（最多6层）
+   - 所有属性使用双引号包裹
+
+2. **组件结构**：
+   - 遵循<template> -> <script setup> -> <style scoped>的顺序
+   - 使用TypeScript语法，确保类型安全
+   - Props和Emits必须定义接口类型
+   - 计算属性和方法按逻辑分组，添加注释
+
+3. **响应式数据**：
+   - 使用ref()定义基本类型响应式数据
+   - 使用reactive()定义对象类型响应式数据
+   - 避免在模板中使用复杂的表达式，使用computed代替
+
+### TypeScript 规范
+1. **类型定义**：
+   - 所有函数参数和返回值必须明确类型
+   - 使用interface定义对象类型，避免使用any
+   - 组件Props、Emits、API请求/响应都要定义类型
+
+2. **导入语句**：
+   - 使用明确的相对路径或@/别名
+   - 按功能分组导入：Vue相关 -> 第三方库 -> 本地文件
+   - 未使用的导入要及时清理
+
+### CSS/样式规范
+1. **Tailwind CSS**：
+   - 优先使用Tailwind工具类
+   - 自定义样式使用<style scoped>
+   - 避免内联样式，特殊情况除外
+
+2. **样式组织**：
+   - 响应式断点：sm: md: lg: xl: 2xl:
+   - 颜色使用语义化变量：primary, secondary, background, foreground等
+   - 动画使用transition类而非自定义CSS动画
+
+### 错误处理和调试
+1. **语法错误预防**：
+   - **模板标签检查清单**：
+     * 每次修改Vue模板后，按Ctrl+S保存前先目视检查标签配对
+     * 特别注意新添加的容器div、嵌套结构、循环和条件渲染的标签
+     * 如果修改涉及多层嵌套，使用缩进对齐来验证层级关系
+     * 复杂修改完成后，立即运行开发服务器验证无语法错误
+   - 使用VSCode/Cursor的自动格式化功能
+   - 定期运行npm run build检查构建错误
+
+2. **运行时错误**：
+   - API调用必须有try-catch错误处理
+   - 组件加载状态要有loading显示
+   - 用户输入必须验证，显示友好错误信息
+
+### 开发流程规范
+1. **端口管理**：
+   - 前端开发服务器：5173端口（Vite默认）
+   - 后端API服务器：3000端口（Express）
+   - 发现端口冲突时，先停止占用进程：taskkill /f /im node.exe
+
+2. **文件保存和提交**：
+   - 保存文件时确保格式正确，没有语法错误
+   - 提交前运行npm run build验证构建成功
+   - 代码提交必须包含有意义的注释
+
+### 常见问题解决
+1. **Vue模板错误**：
+   - **"Element is missing end tag"错误处理流程**：
+     * 立即停止编辑，优先修复标签闭合问题
+     * 从错误提示的行号开始，向上逐行检查每个开始标签是否有对应的结束标签
+     * 使用VSCode/Cursor的"Go to Matching Bracket"功能检查标签配对
+     * 特别注意容器div标签的嵌套层级关系
+     * 修复后立即保存并验证错误是否消除
+   - **标签结构最佳实践**：
+     * 添加容器时使用模式：先写`<div>` + `</div>`，再在中间添加内容
+     * 修改嵌套结构时，先画出DOM树结构图，确保逻辑清晰
+     * 复杂布局建议分步骤构建，每步都验证标签正确闭合
+   - 模板中避免使用未定义的变量，使用v-if判断
+
+2. **TypeScript类型错误**：
+   - 导入类型使用type前缀：import type { ... }
+   - 组件ref使用正确的泛型：ref<Type | null>(null)
+
+3. **构建和运行错误**：
+   - 端口占用：重启终端或杀死Node进程
+   - 依赖问题：删除node_modules重新npm install
+   - 类型错误：检查所有import语句和类型定义
+
+### API设计规范
+1. **RESTful设计**：
+   - GET /api/resource - 获取资源列表
+   - POST /api/resource - 创建资源
+   - PUT /api/resource/:id - 更新资源
+   - DELETE /api/resource/:id - 删除资源
+
+2. **错误处理**：
+   - 统一错误响应格式：{ error: string, details?: any }
+   - HTTP状态码正确使用：200, 201, 400, 404, 500
+   - 日志记录所有错误信息
+
+### 数据库操作
+1. **PostgreSQL**：
+   - 使用参数化查询防止SQL注入
+   - 事务处理确保数据一致性
+   - 连接池管理数据库连接
+
+2. **数据验证**：
+   - 前端表单验证 + 后端数据验证双重保障
+   - 数据类型、长度、格式都要验证
+   - 外键约束确保数据完整性
+
+## 注意事项
+- 所有文件必须使用UTF-8编码
+- 换行符使用LF（\n），不使用CRLF（\r\n）
+- 代码缩进使用2个空格，不使用Tab
+- 文件末尾保留一个空行
+- 删除无用的console.log调试语句
+- 服务默认已启动，不需要重复启动（不需要重复运行npm run dev）
+
+## 命令速查
+```bash
+# 开发环境运行
+npm run dev
+
+# 构建检查
+npm run build
+
+# 类型检查
+npx tsc --noEmit
+
+# 停止Node进程（Windows）
+taskkill /f /im node.exe
+
+# 查看端口占用
+netstat -ano | findstr :3000
+```
