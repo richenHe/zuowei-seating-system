@@ -1,8 +1,9 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import path from 'path';
 
-// 加载环境变量
-dotenv.config();
+// 加载环境变量 - 确保从项目根目录加载
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // PostgreSQL数据库连接配置 - 支持内网和外网连接
 const dbConfig = {

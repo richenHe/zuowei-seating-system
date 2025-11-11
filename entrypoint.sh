@@ -40,6 +40,15 @@ if [ ! -f ".env" ]; then
         echo "⚠️ 未找到环境配置文件"
         echo "💡 应用将使用代码中的默认配置"
     fi
+else
+    echo "✅ 发现现有 .env 文件"
+fi
+
+# 显示数据库配置信息（用于调试）
+if [ -f ".env" ]; then
+    echo "🔍 当前数据库配置："
+    grep "DB_HOST" .env || echo "⚠️ 未找到 DB_HOST 配置"
+    grep "DB_NAME" .env || echo "⚠️ 未找到 DB_NAME 配置"
 fi
 
 # 设置生产环境
