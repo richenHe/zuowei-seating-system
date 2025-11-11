@@ -5,13 +5,13 @@ import path from 'path';
 // 加载环境变量 - 确保从项目根目录加载
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-// PostgreSQL数据库连接配置 - 直接使用正确的Sealos配置
+// PostgreSQL数据库连接配置 - 尝试多种连接方式
 const dbConfig = {
-  host: 'zuowei-postgresql.ns-9zwbf7z.svc',
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: 'xhzpk9wm',
+  host: process.env.DB_HOST || 'postgres', // 在Kubernetes中通常是service名称
+  port: parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME || 'postgres',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'xhzpk9wm',
   // SSL配置（根据环境变量决定是否启用）
   ssl: process.env.DB_SSL === 'true' ? {
     rejectUnauthorized: false    // 允许自签名证书
