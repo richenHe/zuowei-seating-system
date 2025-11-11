@@ -29,10 +29,18 @@ if [ ! -f ".env" ]; then
         echo "📋 使用生产环境配置模板..."
         cp production.env.template .env
         echo "⚠️ 请编辑 .env 文件填入正确的数据库配置！"
+        echo "💡 注意：不要在 .env 文件中设置 NODE_ENV，构建时会自动处理"
     else
         echo "⚠️ 未找到环境配置文件和模板"
         echo "💡 请手动创建 .env 文件"
     fi
+fi
+
+# 检查必需的入口文件
+if [ ! -f "index.html" ]; then
+    echo "❌ 缺少 Vite 入口文件：index.html"
+    echo "💡 请确保项目根目录有 index.html 文件"
+    exit 1
 fi
 
 # 清理旧的构建文件
