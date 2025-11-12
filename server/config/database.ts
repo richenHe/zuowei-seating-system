@@ -2,35 +2,29 @@ import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// 加载环境变量配置文件
-dotenv.config({ path: path.resolve(process.cwd(), 'server.env') });
-
 // 检测运行环境
 const isProduction = process.env.NODE_ENV === 'production';
 
-// 数据库配置 - 根据环境自动选择
-const dbConfig = isProduction ? {
-  // 生产环境配置 - Sealos内网连接
-  host: 'zuowei-postgresql.ns-9z2wbi7z.svc',  // Sealos内网地址
-  port: 5432,
-  database: 'postgres',
-  user: 'postgres',
-  password: 'xhzpk9wm',
-  ssl: false,  // 内网连接不需要SSL
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,  // 内网连接较快
-} : {
-  // 本地开发环境配置 - 外网连接
-  host: 'dbconn.sealoshzh.site',  // 外网访问地址
-  port: 39174,
-  database: 'postgres', 
-  user: 'postgres',
-  password: 'xhzpk9wm',
-  ssl: false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,  // 外网连接超时时间稍长
+// 根据环境加载对应的配置文件
+if (isProduction) {
+  dotenv.config({ path: path.resolve(process.cwd(), 'production.env') });
+} else {
+  dotenv.config({ path: path.resolve(process.cwd(), 'development.env') });
+}
+
+// 数据库配置 - 从环境变量中读取
+const dbConfig = {
+  host: process.env.DB_HOST || (isProduction ? 'zuowei-postgresql.ns-9z2wbi7z.svc' : 'dbconn.sealoshzh.site'),
+  port: parseInt(process.env.DB_PORT || (isProduction ? '5432' : '39174')),
+  database: process.env.DB_NAME || 'postgres',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'xhzpk9wm',
+  ssl: process.env.DB_SSL === 'true' ? {
+    rejectUnauthorized: false
+  } : false,
+  max: parseInt(process.env.DB_MAX_CONNECTIONS || '20'),
+  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || (isProduction ? '5000' : '10000')),
 };
 
 console.log(`🌍 当前环境: ${isProduction ? '生产环境' : '开发环境'}`);

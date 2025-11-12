@@ -46,13 +46,10 @@ if [ ! -f ".env" ]; then
         echo "📋 使用生产环境配置"
         cp production.env .env
         echo "✅ 生产环境配置已设置"
-    elif [ -f "server.env" ]; then
-        echo "📋 使用服务器配置 server.env"
-        cp server.env .env
-        echo "✅ 环境配置已设置"
     else
-        echo "⚠️ 未找到环境配置文件"
-        echo "💡 应用将使用代码中的默认配置"
+        echo "⚠️ 未找到对应的环境配置文件"
+        echo "💡 请确保存在 development.env 或 production.env 文件"
+        exit 1
     fi
 else
     echo "✅ 发现现有 .env 文件"
@@ -78,6 +75,3 @@ echo "------------------------------------"
 
 # 直接启动预构建的应用
 exec node dist-server/server/index.js
-
-
-

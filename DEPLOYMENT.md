@@ -135,7 +135,6 @@ APP_VERSION=1.0.0
 |------|------|----------|
 | `development.env` | 开发/测试环境配置 | 本地开发或测试部署 |
 | `production.env` | 生产环境配置 | Sealos生产环境部署 |
-| `server.env` | 服务器通用配置 | 备用配置 |
 
 ## 🎯 最佳实践
 

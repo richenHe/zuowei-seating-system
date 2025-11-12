@@ -154,7 +154,9 @@ PORT=3000
 ### 🔧 故障排除
 
 **数据库连接问题：**
-检查 `server.env` 文件是否存在，包含正确的数据库配置。
+- 检查 `NODE_ENV` 环境变量是否正确设置（`development` 或 `production`）
+- 确认对应的环境配置文件存在（`development.env` 或 `production.env`）
+- 查看日志确认连接的是正确的数据库地址
 
 **端口占用：**
 默认端口3000，可通过环境变量 `PORT` 修改。
