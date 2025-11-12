@@ -82,10 +82,10 @@ export function randomAssignSeats(
   const availableSeats = [...emptySeats]
   const personsToAssign = [...waitingPersons]
 
-  // 设置随机种子（可选）
-  if (options.seed) {
-    Math.seedrandom = options.seed
-  }
+  // 设置随机种子（可选，这里暂时跳过实现）
+  // if (options.seed) {
+  //   Math.seedrandom = options.seed
+  // }
 
   // 随机打乱人员和座位顺序
   shuffleArray(personsToAssign)
@@ -175,7 +175,7 @@ export function generateSeatingRecommendations(
   const sortedPersons = [...persons].sort((a, b) => a.name.localeCompare(b.name))
   
   let currentDesk = 1
-  let currentSeat = 0
+  let currentSeat = 1
 
   for (const person of sortedPersons) {
     recommendations.push({
@@ -186,13 +186,13 @@ export function generateSeatingRecommendations(
 
     reasons.push({
       person_id: person.id,
-      reason: `按字母顺序排列，分配到桌${currentDesk}座位${currentSeat + 1}`
+      reason: `按字母顺序排列，分配到桌${currentDesk}座位${currentSeat}`
     })
 
     // 移动到下一个座位
     currentSeat++
-    if (currentSeat >= config.seats_per_desk) {
-      currentSeat = 0
+    if (currentSeat > config.seats_per_desk) {
+      currentSeat = 1
       currentDesk++
       if (currentDesk > config.desk_count) {
         break // 座位不足
@@ -226,15 +226,15 @@ export function validateSeatAssignments(
     }
 
     // 如果分配了座位，检查座位有效性
-    if (desk_number !== undefined && seat_number !== undefined) {
+    if (desk_number !== undefined && seat_number !== undefined && desk_number !== null && seat_number !== null) {
       // 检查桌号范围
       if (desk_number < 1 || desk_number > config.desk_count) {
         errors.push(`桌号 ${desk_number} 超出范围 (1-${config.desk_count})`)
       }
 
       // 检查座位号范围
-      if (seat_number < 0 || seat_number >= config.seats_per_desk) {
-        errors.push(`座位号 ${seat_number} 超出范围 (0-${config.seats_per_desk - 1})`)
+      if (seat_number < 1 || seat_number > config.seats_per_desk) {
+        errors.push(`座位号 ${seat_number} 超出范围 (1-${config.seats_per_desk})`)
       }
 
       // 检查座位重复

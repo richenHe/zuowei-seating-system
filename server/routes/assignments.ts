@@ -15,10 +15,15 @@ router.get('/', async (req, res) => {
         sa.seat_number,
         sa.updated_at,
         p.name,
-        p.student_id,
-        p.info
+        p.ambassador_id,
+        p.position,
+        p.tel,
+        p.background,
+        p.info,
+        a.name as ambassador_name
       FROM seat_assignments sa
       JOIN persons p ON sa.person_id = p.id
+      LEFT JOIN ambassadors a ON p.ambassador_id = a.id
       ORDER BY sa.desk_number ASC, sa.seat_number ASC
     `);
     
@@ -64,10 +69,16 @@ router.get('/layout', async (req, res) => {
         sa.seat_number,
         sa.person_id,
         p.name,
-        p.student_id,
-        p.info
+        p.ambassador_id,
+        p.position,
+        p.tel,
+        p.background,
+        p.info,
+        p.created_at,
+        a.name as ambassador_name
       FROM seat_assignments sa
       JOIN persons p ON sa.person_id = p.id
+      LEFT JOIN ambassadors a ON p.ambassador_id = a.id
       WHERE sa.desk_number IS NOT NULL AND sa.seat_number IS NOT NULL
       ORDER BY sa.desk_number ASC, sa.seat_number ASC
     `);
@@ -75,13 +86,13 @@ router.get('/layout', async (req, res) => {
     // 构建桌子布局
     const layout: DeskLayout[] = [];
     
-    for (let deskNum = 0; deskNum < desk_count; deskNum++) {
+    for (let deskNum = 1; deskNum <= desk_count; deskNum++) { // 从1开始桌号
       const desk: DeskLayout = {
         desk_number: deskNum,
         seats: []
       };
 
-      for (let seatNum = 0; seatNum < seats_per_desk; seatNum++) {
+      for (let seatNum = 1; seatNum <= seats_per_desk; seatNum++) { // 从1开始座位号
         const seatInfo: SeatInfo = {
           desk_number: deskNum,
           seat_number: seatNum,
@@ -96,9 +107,13 @@ router.get('/layout', async (req, res) => {
           seatInfo.person = {
             id: assignment.person_id,
             name: assignment.name,
-            student_id: assignment.student_id,
+            ambassador_id: assignment.ambassador_id,
+            position: assignment.position,
+            tel: assignment.tel,
+            background: assignment.background,
             info: assignment.info,
-            created_at: '',
+            created_at: assignment.created_at || '',
+            ambassador_name: assignment.ambassador_name,
             desk_number: deskNum,
             seat_number: seatNum
           };
@@ -112,21 +127,30 @@ router.get('/layout', async (req, res) => {
 
     // 获取备选区人员（没有有效座位分配的人员）
     const waitingResult = await pool.query(`
-      SELECT p.id, p.name, p.student_id, p.info, p.created_at
+      SELECT p.id, p.name, p.ambassador_id, p.position, p.tel, p.background, p.info, p.created_at,
+             a.name as ambassador_name
       FROM persons p
       LEFT JOIN seat_assignments sa ON p.id = sa.person_id
+      LEFT JOIN ambassadors a ON p.ambassador_id = a.id
       WHERE sa.person_id IS NULL 
          OR sa.desk_number IS NULL 
          OR sa.seat_number IS NULL
-         OR sa.desk_number >= $1
+         OR sa.desk_number > $1
       ORDER BY p.created_at ASC
     `, [desk_count]);
+
+    // 为备选区人员添加空的座位信息
+    const waitingPersons = waitingResult.rows.map(person => ({
+      ...person,
+      desk_number: null,
+      seat_number: null
+    }));
 
     const response: ApiResponse<{layout: DeskLayout[], waiting: PersonWithAssignment[]}> = {
       success: true,
       data: {
         layout,
-        waiting: waitingResult.rows
+        waiting: waitingPersons
       }
     };
     

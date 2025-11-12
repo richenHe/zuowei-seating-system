@@ -82,7 +82,7 @@
             
             <!-- 桌子标签 -->
             <div class="desk-label">
-              桌 {{ desk.desk_number + 1 }}
+              桌 {{ desk.desk_number }}
             </div>
           </div>
 
@@ -94,7 +94,7 @@
               :class="getSeatSide(0)"
               class="seat-position"
               :draggable="!!getSeat(desk, 0)?.person"
-              @click="handleSeatClick(getSeat(desk, 0)!)"
+              @click="handleSeatClick(getSeat(desk, 0)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 0)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
@@ -106,49 +106,60 @@
               <div class="seat-avatar">
                 <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 0)?.person">
-                  <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- 头像背景圆形 -->
-                    <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                  <div class="avatar-container">
+                    <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <!-- 头像背景圆形 -->
+                      <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                      
+                      <!-- 渐变定义 -->
+                      <defs>
+                        <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+                        </linearGradient>
+                      </defs>
+                      
+                      <!-- 人物头像 -->
+                      <g transform="translate(30, 30)">
+                        <!-- 头部 -->
+                        <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
+                        
+                        <!-- 眼睛 -->
+                        <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
+                        <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
+                        
+                        <!-- 嘴巴 -->
+                        <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- 身体 -->
+                        <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
+                        
+                        <!-- 领子 -->
+                        <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
+                        
+                        <!-- 装饰细节 -->
+                        <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
+                      </g>
+                      
+                      <!-- 在线状态指示器 -->
+                      <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
+                      <circle cx="48" cy="12" r="3" fill="#ffffff"/>
+                    </svg>
                     
-                    <!-- 渐变定义 -->
-                    <defs>
-                      <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
-                      </linearGradient>
-                      
-                      <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
-                      </linearGradient>
-                    </defs>
-                    
-                    <!-- 人物头像 -->
-                    <g transform="translate(30, 30)">
-                      <!-- 头部 -->
-                      <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
-                      
-                      <!-- 眼睛 -->
-                      <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
-                      <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
-                      
-                      <!-- 嘴巴 -->
-                      <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
-                      
-                      <!-- 身体 -->
-                      <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
-                      
-                      <!-- 领子 -->
-                      <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
-                      
-                      <!-- 装饰细节 -->
-                      <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
-                    </g>
-                    
-                    <!-- 在线状态指示器 -->
-                    <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
-                    <circle cx="48" cy="12" r="3" fill="#ffffff"/>
-                  </svg>
+                    <!-- 职务标签 -->
+                    <div 
+                      v-if="shouldShowPositionTag(getSeat(desk, 0)?.person?.position)"
+                      class="position-tag"
+                      :style="{ color: getPositionColor(getSeat(desk, 0)?.person?.position) }"
+                    >
+                      {{ getPositionLabel(getSeat(desk, 0)?.person?.position) }}
+                    </div>
+                  </div>
                   <div class="person-name">{{ getSeat(desk, 0)?.person?.name }}</div>
                 </template>
                 
@@ -206,7 +217,7 @@
               :class="getSeatSide(1 + seatIndex - 1)"
               class="seat-position"
               :draggable="!!getSeat(desk, 1 + seatIndex - 1)?.person"
-              @click="handleSeatClick(getSeat(desk, 1 + seatIndex - 1)!)"
+              @click="handleSeatClick(getSeat(desk, 1 + seatIndex - 1)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 1 + seatIndex - 1)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
@@ -218,49 +229,60 @@
               <div class="seat-avatar">
             <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 1 + seatIndex - 1)?.person">
-                  <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- 头像背景圆形 -->
-                    <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                  <div class="avatar-container">
+                    <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <!-- 头像背景圆形 -->
+                      <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                      
+                      <!-- 渐变定义 -->
+                      <defs>
+                        <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+                        </linearGradient>
+                      </defs>
+                      
+                      <!-- 人物头像 -->
+                      <g transform="translate(30, 30)">
+                        <!-- 头部 -->
+                        <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
+                        
+                        <!-- 眼睛 -->
+                        <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
+                        <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
+                        
+                        <!-- 嘴巴 -->
+                        <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- 身体 -->
+                        <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
+                        
+                        <!-- 领子 -->
+                        <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
+                        
+                        <!-- 装饰细节 -->
+                        <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
+                      </g>
+                      
+                      <!-- 在线状态指示器 -->
+                      <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
+                      <circle cx="48" cy="12" r="3" fill="#ffffff"/>
+                    </svg>
                     
-                    <!-- 渐变定义 -->
-                    <defs>
-                      <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
-                      </linearGradient>
-                      
-                      <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
-                      </linearGradient>
-                    </defs>
-                    
-                    <!-- 人物头像 -->
-                    <g transform="translate(30, 30)">
-                      <!-- 头部 -->
-                      <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
-                      
-                      <!-- 眼睛 -->
-                      <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
-                      <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
-                      
-                      <!-- 嘴巴 -->
-                      <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
-                      
-                      <!-- 身体 -->
-                      <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
-                      
-                      <!-- 领子 -->
-                      <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
-                      
-                      <!-- 装饰细节 -->
-                      <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
-                    </g>
-                    
-                    <!-- 在线状态指示器 -->
-                    <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
-                    <circle cx="48" cy="12" r="3" fill="#ffffff"/>
-                  </svg>
+                    <!-- 职务标签 -->
+                    <div 
+                      v-if="shouldShowPositionTag(getSeat(desk, 1 + seatIndex - 1)?.person?.position)"
+                      class="position-tag"
+                      :style="{ color: getPositionColor(getSeat(desk, 1 + seatIndex - 1)?.person?.position) }"
+                    >
+                      {{ getPositionLabel(getSeat(desk, 1 + seatIndex - 1)?.person?.position) }}
+                    </div>
+                  </div>
                   <div class="person-name">{{ getSeat(desk, 1 + seatIndex - 1)?.person?.name }}</div>
                 </template>
                 
@@ -318,7 +340,7 @@
               :class="getSeatSide(1 + leftSeatsCount + seatIndex - 1)"
               class="seat-position"
               :draggable="!!getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person"
-              @click="handleSeatClick(getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!)"
+              @click="handleSeatClick(getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
@@ -330,49 +352,60 @@
               <div class="seat-avatar">
                 <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person">
-                  <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- 头像背景圆形 -->
-                    <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                  <div class="avatar-container">
+                    <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <!-- 头像背景圆形 -->
+                      <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                      
+                      <!-- 渐变定义 -->
+                      <defs>
+                        <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+                        </linearGradient>
+                      </defs>
+                      
+                      <!-- 人物头像 -->
+                      <g transform="translate(30, 30)">
+                        <!-- 头部 -->
+                        <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
+                        
+                        <!-- 眼睛 -->
+                        <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
+                        <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
+                        
+                        <!-- 嘴巴 -->
+                        <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- 身体 -->
+                        <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
+                        
+                        <!-- 领子 -->
+                        <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
+                        
+                        <!-- 装饰细节 -->
+                        <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
+                      </g>
+                      
+                      <!-- 在线状态指示器 -->
+                      <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
+                      <circle cx="48" cy="12" r="3" fill="#ffffff"/>
+                    </svg>
                     
-                    <!-- 渐变定义 -->
-                    <defs>
-                      <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
-                      </linearGradient>
-                      
-                      <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
-                      </linearGradient>
-                    </defs>
-                    
-                    <!-- 人物头像 -->
-                    <g transform="translate(30, 30)">
-                      <!-- 头部 -->
-                      <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
-                      
-                      <!-- 眼睛 -->
-                      <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
-                      <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
-                      
-                      <!-- 嘴巴 -->
-                      <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
-                      
-                      <!-- 身体 -->
-                      <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
-                      
-                      <!-- 领子 -->
-                      <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
-                      
-                      <!-- 装饰细节 -->
-                      <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
-                    </g>
-                    
-                    <!-- 在线状态指示器 -->
-                    <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
-                    <circle cx="48" cy="12" r="3" fill="#ffffff"/>
-                  </svg>
+                    <!-- 职务标签 -->
+                    <div 
+                      v-if="shouldShowPositionTag(getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person?.position)"
+                      class="position-tag"
+                      :style="{ color: getPositionColor(getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person?.position) }"
+                    >
+                      {{ getPositionLabel(getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person?.position) }}
+                    </div>
+                  </div>
                   <div class="person-name">{{ getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person?.name }}</div>
             </template>
             
@@ -430,7 +463,7 @@
               :class="getSeatSide(1 + leftSeatsCount + rightSeatsCount)"
               class="seat-position"
               :draggable="!!getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person"
-              @click="handleSeatClick(getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!)"
+              @click="handleSeatClick(getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
@@ -442,49 +475,60 @@
               <div class="seat-avatar">
                 <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person">
-                  <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- 头像背景圆形 -->
-                    <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                  <div class="avatar-container">
+                    <svg class="person-avatar-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <!-- 头像背景圆形 -->
+                      <circle cx="30" cy="30" r="28" fill="url(#avatarGradient)" stroke="url(#avatarBorder)" stroke-width="2"/>
+                      
+                      <!-- 渐变定义 -->
+                      <defs>
+                        <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
+                        </linearGradient>
+                        
+                        <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+                        </linearGradient>
+                      </defs>
+                      
+                      <!-- 人物头像 -->
+                      <g transform="translate(30, 30)">
+                        <!-- 头部 -->
+                        <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
+                        
+                        <!-- 眼睛 -->
+                        <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
+                        <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
+                        
+                        <!-- 嘴巴 -->
+                        <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
+                        
+                        <!-- 身体 -->
+                        <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
+                        
+                        <!-- 领子 -->
+                        <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
+                        
+                        <!-- 装饰细节 -->
+                        <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
+                      </g>
+                      
+                      <!-- 在线状态指示器 -->
+                      <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
+                      <circle cx="48" cy="12" r="3" fill="#ffffff"/>
+                    </svg>
                     
-                    <!-- 渐变定义 -->
-                    <defs>
-                      <linearGradient id="avatarGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#bfdbfe;stop-opacity:1" />
-                      </linearGradient>
-                      
-                      <linearGradient id="avatarBorder" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
-                      </linearGradient>
-                    </defs>
-                    
-                    <!-- 人物头像 -->
-                    <g transform="translate(30, 30)">
-                      <!-- 头部 -->
-                      <circle cx="0" cy="-8" r="10" fill="#fbbf24" opacity="0.9"/>
-                      
-                      <!-- 眼睛 -->
-                      <circle cx="-4" cy="-10" r="1.5" fill="#374151"/>
-                      <circle cx="4" cy="-10" r="1.5" fill="#374151"/>
-                      
-                      <!-- 嘴巴 -->
-                      <path d="M -3 -5 Q 0 -3 3 -5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
-                      
-                      <!-- 身体 -->
-                      <rect x="-8" y="2" width="16" height="18" rx="8" fill="#60a5fa" opacity="0.9"/>
-                      
-                      <!-- 领子 -->
-                      <path d="M -6 2 L 0 8 L 6 2" fill="#3b82f6" opacity="0.8"/>
-                      
-                      <!-- 装饰细节 -->
-                      <circle cx="0" cy="8" r="1" fill="rgba(255,255,255,0.6)"/>
-                    </g>
-                    
-                    <!-- 在线状态指示器 -->
-                    <circle cx="48" cy="12" r="6" fill="#10b981" opacity="0.9"/>
-                    <circle cx="48" cy="12" r="3" fill="#ffffff"/>
-                  </svg>
+                    <!-- 职务标签 -->
+                    <div 
+                      v-if="shouldShowPositionTag(getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person?.position)"
+                      class="position-tag"
+                      :style="{ color: getPositionColor(getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person?.position) }"
+                    >
+                      {{ getPositionLabel(getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person?.position) }}
+                    </div>
+                  </div>
                   <div class="person-name">{{ getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person?.name }}</div>
                 </template>
                 
@@ -587,6 +631,29 @@
       </div>
     </div>
 
+    <!-- 添加至备选区域标签 -->
+    <div
+      v-show="addToWaitingVisible"
+      class="fixed z-50 pointer-events-none"
+      :style="{
+        left: addToWaitingPosition.x + 'px',
+        top: addToWaitingPosition.y + 'px',
+        transform: 'translate(0, 0)'
+      }"
+    >
+      <div 
+        class="bg-black/80 text-white text-sm rounded-lg px-4 py-2 shadow-xl backdrop-blur-sm border border-white/20 pointer-events-auto cursor-pointer hover:bg-black/90 transition-colors duration-200"
+        @click="handleAddToWaiting"
+      >
+        <div class="flex items-center space-x-2">
+          <span>➕</span>
+          <span>添加至备选区域</span>
+        </div>
+      </div>
+      <!-- 小箭头指向左上角的人员头像 -->
+      <div class="absolute -left-1 -top-1 w-0 h-0 border-r-4 border-b-4 border-transparent border-r-black/80"></div>
+    </div>
+
     <!-- 人员选择浮窗 -->
     <PersonSelectorModal
       :visible="selectorVisible"
@@ -619,11 +686,49 @@ const props = withDefaults(defineProps<Props>(), {
   waitingPersons: () => []
 })
 
+// ============ 职务标签相关 ============
+
+/**
+ * 获取职务标签文本
+ */
+const getPositionLabel = (position?: number): string => {
+  switch (position) {
+    case 1: return '辅导员'
+    case 2: return '助攻手'
+    case 3: return '组长'
+    case 4: return '副组长'
+    case 5: return '学员'
+    default: return ''
+  }
+}
+
+/**
+ * 获取职务标签颜色
+ */
+const getPositionColor = (position?: number): string => {
+  switch (position) {
+    case 1: return '#ef4444' // 红色 - 辅导员
+    case 2: return '#f87171' // 淡红 - 助攻手  
+    case 3: return '#d97706' // 土黄色 - 组长
+    case 4: return '#f59e0b' // 浅土黄 - 副组长
+    case 5: return '' // 学员不显示
+    default: return ''
+  }
+}
+
+/**
+ * 是否显示职务标签
+ */
+const shouldShowPositionTag = (position?: number): boolean => {
+  return position !== undefined && position !== 5 && position >= 1 && position <= 4
+}
+
 // ============ Emits ============
 interface Emits {
   (e: 'seat-drop', data: { seat: SeatInfo, draggedPerson: PersonWithAssignment }): void
   (e: 'seat-click', seat: SeatInfo): void
   (e: 'person-assign', data: { person: PersonWithAssignment, seat: SeatInfo }): void
+  (e: 'add-to-waiting', person: PersonWithAssignment): void
 }
 
 const emit = defineEmits<Emits>()
@@ -643,6 +748,11 @@ const tooltipVisible = ref(false)
 const tooltipData = ref<SeatInfo | null>(null)
 const tooltipRef = ref<HTMLElement>()
 const tooltipStyle = ref<Record<string, string>>({})
+
+// 添加至备选区域标签状态
+const addToWaitingVisible = ref(false)
+const addToWaitingSeat = ref<SeatInfo | null>(null)
+const addToWaitingPosition = ref({ x: 0, y: 0 })
 
 // 人员选择浮窗相关状态
 const selectorVisible = ref(false)
@@ -815,14 +925,70 @@ const getSeatSide = (seatIndex: number) => {
 }
 
 /**
+ * 显示添加至备选区域标签
+ */
+const showAddToWaitingLabel = (seat: SeatInfo, event?: MouseEvent) => {
+  if (event) {
+    // 查找座位头像元素
+    const target = event.target as HTMLElement
+    const seatAvatar = target.closest('.seat-position')?.querySelector('.seat-avatar')
+    
+    if (seatAvatar) {
+      const rect = seatAvatar.getBoundingClientRect()
+      addToWaitingPosition.value = {
+        x: rect.right - 10,  // 从头像右边缘向内稍微偏移
+        y: rect.bottom - 10  // 从头像底边向上稍微偏移
+      }
+    } else {
+      // 备用方案：使用点击目标的位置
+      const rect = target.getBoundingClientRect()
+      addToWaitingPosition.value = {
+        x: rect.right - 10,
+        y: rect.bottom - 10
+      }
+    }
+  }
+  addToWaitingSeat.value = seat
+  addToWaitingVisible.value = true
+  
+  // 3秒后自动隐藏
+  setTimeout(() => {
+    hideAddToWaitingLabel()
+  }, 3000)
+}
+
+/**
+ * 隐藏添加至备选区域标签
+ */
+const hideAddToWaitingLabel = () => {
+  addToWaitingVisible.value = false
+  addToWaitingSeat.value = null
+}
+
+/**
+ * 处理添加至备选区域
+ */
+const handleAddToWaiting = () => {
+  if (addToWaitingSeat.value?.person) {
+    emit('add-to-waiting', addToWaitingSeat.value.person)
+    hideAddToWaitingLabel()
+    console.log(`➕ 添加至备选区域：`, addToWaitingSeat.value.person.name)
+  }
+}
+
+/**
  * 处理座位点击
  */
-const handleSeatClick = (seat: SeatInfo) => {
+const handleSeatClick = (seat: SeatInfo, event?: MouseEvent) => {
   // 如果座位为空且有备选人员，显示人员选择浮窗
   if (!seat.person && props.waitingPersons.length > 0) {
     selectedSeat.value = seat
     selectorVisible.value = true
     console.log(`👆 空座位点击，显示人员选择浮窗`)
+  } else if (seat.person) {
+    // 如果座位有人，显示"添加至备选区域"标签
+    showAddToWaitingLabel(seat, event)
+    console.log(`👆 有人座位点击，显示添加至备选区域标签`)
   } else {
     // 原有的座位点击逻辑
     emit('seat-click', seat)
@@ -1261,11 +1427,36 @@ const handlePersonSelection = (data: { person: PersonWithAssignment, seat: SeatI
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* 头像容器 */
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
 /* 人物头像SVG */
 .person-avatar-svg {
   width: 50px;
   height: 50px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* 职务标签 */
+.position-tag {
+  position: absolute;
+  top: -4px;
+  right: -10px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  white-space: nowrap;
+  min-width: 28px;
+  text-align: center;
 }
 
 /* 空座位SVG */

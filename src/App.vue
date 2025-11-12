@@ -60,15 +60,24 @@
     <main class="container mx-auto px-4 py-6 space-y-8">
       
       <!-- 顶部：配置面板和人员管理并排 -->
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
-        <!-- 左侧：配置面板（占2列） -->
-        <div class="lg:col-span-2">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto items-stretch">
+        <!-- 左侧：配置面板和功能模块区域（占2列） -->
+        <div class="lg:col-span-2 flex flex-col">
+          <!-- 配置面板 -->
           <ConfigPanel
             :config="config"
             :loading="loading"
             @update-config="handleConfigUpdate"
             @update-table-color="handleTableColorUpdate"
           />
+          
+          <!-- 功能模块：放在配置面板下方，填充剩余空间 -->
+          <div class="flex-1 mt-6">
+            <FunctionsPanel
+              :loading="loading"
+              @show-message="handleShowMessage"
+            />
+          </div>
         </div>
         
         <!-- 右侧：人员管理（占3列） -->
@@ -100,6 +109,7 @@
           @seat-drop="handleSeatDrop"
           @seat-click="handleSeatClick"
           @person-assign="handlePersonAssign"
+          @add-to-waiting="handleAddToWaiting"
         />
       </div>
 
@@ -131,6 +141,7 @@ import ConfigPanel from './components/ConfigPanel.vue'
 import PersonManager from './components/PersonManager.vue'
 import SeatingArea from './components/SeatingArea.vue'
 import WaitingArea from './components/WaitingArea.vue'
+import FunctionsPanel from './components/FunctionsPanel.vue'
 
 // API导入
 import {
@@ -299,13 +310,13 @@ const handleConfigChange = async (newConfig: ConfigUpdateRequest) => {
       } else {
         // 桌子保留，但检查座位数是否超出范围
         desk.seats.forEach(seat => {
-          if (seat.person && seat.seat_number >= newConfig.seats_per_desk) {
+          if (seat.person && seat.seat_number > newConfig.seats_per_desk) {
             needReassignment.push({
               person_id: seat.person.id,
               desk_number: null,  // 移到备选区
               seat_number: null
             })
-            console.log(`👥 将 ${seat.person.name} 从桌${desk.desk_number}座${seat.seat_number + 1}移到备选区（超出座位数）`)
+            console.log(`👥 将 ${seat.person.name} 从桌${desk.desk_number}座${seat.seat_number}移到备选区（超出座位数）`)
           }
         })
       }
@@ -644,9 +655,9 @@ const rebuildLayoutFromTempState = () => {
   const newWaiting: PersonWithAssignment[] = []
   
   // 创建空布局
-  for (let deskIndex = 0; deskIndex < config.value.desk_count; deskIndex++) {
+  for (let deskIndex = 1; deskIndex <= config.value.desk_count; deskIndex++) {
     const seats: SeatInfo[] = []
-    for (let seatIndex = 0; seatIndex < config.value.seats_per_desk; seatIndex++) {
+    for (let seatIndex = 1; seatIndex <= config.value.seats_per_desk; seatIndex++) {
       seats.push({
         desk_number: deskIndex,
         seat_number: seatIndex,
@@ -681,10 +692,10 @@ const rebuildLayoutFromTempState = () => {
     console.log(`🧑 处理 ${person.name}: 原始位置(${person.desk_number}, ${person.seat_number}), 临时位置(${tempAssignment?.desk_number}, ${tempAssignment?.seat_number}), 最终位置(${deskNumber}, ${seatNumber})`)
     
     if (deskNumber != null && seatNumber != null && 
-        deskNumber < config.value!.desk_count &&
-        seatNumber < config.value!.seats_per_desk) {
-      // 分配到座位
-      newLayout[deskNumber].seats[seatNumber].person = person
+        deskNumber >= 1 && deskNumber <= config.value!.desk_count &&
+        seatNumber >= 1 && seatNumber <= config.value!.seats_per_desk) {
+      // 分配到座位（需要转换为数组索引）
+      newLayout[deskNumber - 1].seats[seatNumber - 1].person = person
       console.log(`✅ ${person.name} 分配到座位 桌${deskNumber}座${seatNumber}`)
     } else {
       // 加入备选区
@@ -709,9 +720,9 @@ const rebuildLayoutFromPersons = () => {
   const newWaiting: PersonWithAssignment[] = []
   
   // 创建空布局
-  for (let deskIndex = 0; deskIndex < config.value.desk_count; deskIndex++) {
+  for (let deskIndex = 1; deskIndex <= config.value.desk_count; deskIndex++) {
     const seats: SeatInfo[] = []
-    for (let seatIndex = 0; seatIndex < config.value.seats_per_desk; seatIndex++) {
+    for (let seatIndex = 1; seatIndex <= config.value.seats_per_desk; seatIndex++) {
       seats.push({
         desk_number: deskIndex,
         seat_number: seatIndex,
@@ -727,10 +738,10 @@ const rebuildLayoutFromPersons = () => {
   // 分配人员到座位或备选区（基于已保存的状态）
   persons.value.forEach(person => {
     if (person.desk_number != null && person.seat_number != null && 
-        person.desk_number < config.value!.desk_count &&
-        person.seat_number < config.value!.seats_per_desk) {
-      // 分配到座位
-      newLayout[person.desk_number].seats[person.seat_number].person = person
+        person.desk_number >= 1 && person.desk_number <= config.value!.desk_count &&
+        person.seat_number >= 1 && person.seat_number <= config.value!.seats_per_desk) {
+      // 分配到座位（需要转换为数组索引）
+      newLayout[person.desk_number - 1].seats[person.seat_number - 1].person = person
     } else {
       // 加入备选区
       newWaiting.push(person)
@@ -926,6 +937,43 @@ const handlePersonAssign = (data: { person: PersonWithAssignment, seat: SeatInfo
 }
 
 /**
+ * 处理添加至备选区域
+ */
+const handleAddToWaiting = (person: PersonWithAssignment) => {
+  error.value = null
+  console.log('➕ 添加至备选区域:', person.name)
+  
+  try {
+    // 将人员移到备选区（清除座位分配）
+    const assignment: AssignmentUpdateRequest = {
+      person_id: person.id,
+      desk_number: null,
+      seat_number: null
+    }
+    
+    console.log('📋 创建备选区分配:', assignment)
+    
+    // 记录待保存的变更
+    pendingChanges.value.set(person.id, assignment)
+    
+    // 立即更新本地状态以提供即时反馈
+    updateLocalState([assignment])
+    
+    hasChanges.value = true
+    successMessage.value = `${person.name} 已添加至备选区域（待保存）`
+    console.log('✅ 添加至备选区域成功，已加入待保存队列')
+    
+    // 自动清除成功消息
+    setTimeout(() => {
+      successMessage.value = null
+    }, 3000)
+  } catch (err) {
+    error.value = '添加至备选区域失败'
+    console.error('❌ 添加至备选区域失败:', err)
+  }
+}
+
+/**
  * 处理备选区拖拽
  */
 const handlePersonDrop = (dropData: { person: PersonWithAssignment, source: string }) => {
@@ -1044,6 +1092,19 @@ const clearError = () => {
  */
 const clearSuccess = () => {
   successMessage.value = null
+}
+
+/**
+ * 处理消息显示
+ */
+const handleShowMessage = (type: 'success' | 'error', message: string) => {
+  if (type === 'success') {
+    successMessage.value = message
+    error.value = null
+  } else {
+    error.value = message
+    successMessage.value = null
+  }
 }
 
 /**

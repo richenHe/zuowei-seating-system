@@ -130,11 +130,6 @@
               />
               <span class="text-xs text-muted-foreground">自定义颜色</span>
             </div>
-            
-            <!-- 当前颜色显示 -->
-            <div class="text-xs text-muted-foreground">
-              当前颜色：{{ selectedTableColor }}
-            </div>
           </div>
         </div>
 

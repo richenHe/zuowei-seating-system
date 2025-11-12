@@ -2,25 +2,39 @@ import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// 加载环境变量 - 确保从项目根目录加载
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// 加载环境变量配置文件
+dotenv.config({ path: path.resolve(process.cwd(), 'server.env') });
 
-// PostgreSQL数据库连接配置 - 使用正确的Sealos内网地址
-const dbConfig = {
-  host: process.env.DB_HOST || 'zuowei-postgresql.ns-9z2wbi7z.svc', // 正确的完整主机名
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'postgres',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'xhzpk9wm',
-  // SSL配置（根据环境变量决定是否启用）
-  ssl: process.env.DB_SSL === 'true' ? {
-    rejectUnauthorized: false    // 允许自签名证书
-  } : false,
-  // 连接池配置
-  max: parseInt(process.env.DB_MAX_CONNECTIONS || '20'),                    // 最大连接数
-  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),     // 空闲超时时间
-  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '5000'), // 连接超时时间（内网连接更快）
+// 检测运行环境
+const isProduction = process.env.NODE_ENV === 'production';
+
+// 数据库配置 - 根据环境自动选择
+const dbConfig = isProduction ? {
+  // 生产环境配置 - Sealos内网连接
+  host: 'zuowei-postgresql.ns-9z2wbi7z.svc',  // Sealos内网地址
+  port: 5432,
+  database: 'postgres',
+  user: 'postgres',
+  password: 'xhzpk9wm',
+  ssl: false,  // 内网连接不需要SSL
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,  // 内网连接较快
+} : {
+  // 本地开发环境配置 - 外网连接
+  host: 'dbconn.sealoshzh.site',  // 外网访问地址
+  port: 39174,
+  database: 'postgres', 
+  user: 'postgres',
+  password: 'xhzpk9wm',
+  ssl: false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,  // 外网连接超时时间稍长
 };
+
+console.log(`🌍 当前环境: ${isProduction ? '生产环境' : '开发环境'}`);
+console.log(`📊 数据库连接: ${dbConfig.host}:${dbConfig.port}`);
 
 // 创建连接池
 export const pool = new Pool(dbConfig);
@@ -92,6 +106,9 @@ export async function initializeDatabase(): Promise<void> {
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         ambassador_id INTEGER REFERENCES ambassadors(id) ON DELETE SET NULL,
+        position INTEGER,
+        tel VARCHAR(30),
+        background VARCHAR(255),
         info TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -112,6 +129,33 @@ export async function initializeDatabase(): Promise<void> {
     } catch (error) {
       // 忽略字段已存在的错误
       console.log('✅ ambassador_id字段检查完成');
+    }
+    
+    // 检查并添加position字段（如果不存在）
+    try {
+      await client.query(`
+        ALTER TABLE persons ADD COLUMN IF NOT EXISTS position INTEGER
+      `);
+    } catch (error) {
+      console.log('✅ position字段检查完成');
+    }
+    
+    // 检查并添加tel字段（如果不存在）
+    try {
+      await client.query(`
+        ALTER TABLE persons ADD COLUMN IF NOT EXISTS tel VARCHAR(30)
+      `);
+    } catch (error) {
+      console.log('✅ tel字段检查完成');
+    }
+    
+    // 检查并添加background字段（如果不存在）
+    try {
+      await client.query(`
+        ALTER TABLE persons ADD COLUMN IF NOT EXISTS background VARCHAR(255)
+      `);
+    } catch (error) {
+      console.log('✅ background字段检查完成');
     }
     console.log('✅ persons表创建/检查完成');
 

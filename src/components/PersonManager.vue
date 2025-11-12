@@ -7,163 +7,103 @@
     </div>
 
     <!-- 左右两栏布局 -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
-      <!-- 左侧：添加人员表单 -->
-      <div class="space-y-4">
-        <div class="text-sm font-medium text-foreground mb-3">
-          ➕ 添加新人员
-        </div>
-        <div class="p-4 bg-muted/30 rounded-lg border border-muted">
-          <form @submit.prevent="handleAddPerson" class="space-y-4">
-            
-            <!-- 姓名输入 -->
-            <div class="space-y-2">
-              <label for="person-name" class="block text-sm font-medium text-foreground">
-                姓名 <span class="text-destructive">*</span>
-              </label>
-              <input
-                id="person-name"
-                v-model="formData.name"
-                type="text"
-                maxlength="100"
-                :disabled="loading"
-                class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="请输入姓名"
-                required
-              />
-              <div v-if="errors.name" class="text-xs text-destructive">
-                {{ errors.name }}
-              </div>
-            </div>
-
-            <!-- 传播大使选择 -->
-            <div class="space-y-2">
-              <label for="person-ambassador" class="block text-sm font-medium text-foreground">
-                传播大使
-              </label>
-              <input
-                id="person-ambassador"
-                :value="selectedAmbassadorName"
-                type="text"
-                readonly
-                :disabled="loading"
-                class="w-full px-3 py-2 border border-input rounded-md bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                placeholder="点击选择传播大使（可选）"
-                @click="showAmbassadorSelectModal = true"
-              />
-              <div v-if="errors.ambassador_id" class="text-xs text-destructive">
-                {{ errors.ambassador_id }}
-              </div>
-            </div>
-
-            <!-- 其他信息 -->
-            <div class="space-y-2">
-              <label for="person-info" class="block text-sm font-medium text-foreground">
-                其他信息
-              </label>
-              <textarea
-                id="person-info"
-                v-model="formData.info"
-                rows="2"
-                maxlength="500"
-                :disabled="loading"
-                class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-                placeholder="职务、备注等（可选）"
-              ></textarea>
-              <div class="text-xs text-muted-foreground text-right">
-                {{ (formData.info || '').length }}/500
-              </div>
-            </div>
-
-            <!-- 提交按钮 -->
+      <!-- 左侧：添加人员按钮 + 人员列表 -->
+      <div class="space-y-6">
+        <!-- 添加人员按钮区域 -->
+        <div class="space-y-4">
+          <div class="text-sm font-medium text-foreground mb-3">
+            ➕ 添加新人员
+          </div>
+          <div class="p-4 bg-muted/30 rounded-lg border border-muted">
             <button
-              type="submit"
-              :disabled="loading || !isFormValid"
-              class="w-full px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              @click="showAddPersonModal = true"
+              :disabled="loading"
+              class="w-full px-4 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center space-x-2"
             >
-              <div class="flex items-center justify-center space-x-2">
-                <div v-if="loading" class="w-4 h-4 loading-spinner"></div>
-                <span>{{ loading ? '添加中...' : '添加人员' }}</span>
-                <div v-if="!loading">➕</div>
-              </div>
+              <span>添加新人员</span>
+              <div>➕</div>
             </button>
-          </form>
-        </div>
-      </div>
-
-      <!-- 右侧：人员列表 -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="text-sm font-medium text-foreground">
-            📋 人员列表（{{ persons.length }} 人）
+            <div class="text-xs text-muted-foreground mt-2 text-center">
+              点击打开详细添加表单
+            </div>
           </div>
-          <button
-            @click="showPersonListModal = true"
-            class="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            🔍 查看全部
-          </button>
         </div>
 
-        <!-- 紧凑人员列表 -->
-        <div class="bg-muted/20 rounded-lg border border-muted p-3">
-          <div v-if="persons.length === 0" class="text-center py-6">
-            <div class="text-2xl mb-2">👤</div>
-            <div class="text-xs text-muted-foreground">暂无人员</div>
-          </div>
-          
-          <div v-else class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-            <div
-              v-for="person in persons.slice(0, 4)"
-              :key="person.id"
-              class="flex items-center justify-between p-2 bg-background rounded border hover:shadow-sm transition-shadow"
+        <!-- 人员列表区域 -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="text-sm font-medium text-foreground">
+              📋 人员列表（{{ persons.length }} 人）
+            </div>
+            <button
+              @click="showPersonListModal = true"
+              class="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center space-x-2">
-                  <div class="text-sm font-medium truncate">{{ person.name }}</div>
-                  <div
-                    v-if="person.ambassador_name"
-                    class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded"
-                  >
-                    {{ person.ambassador_name }}
+              🔍 查看全部
+            </button>
+          </div>
+
+          <!-- 紧凑人员列表 -->
+          <div class="bg-muted/20 rounded-lg border border-muted p-3">
+            <div v-if="persons.length === 0" class="text-center py-6">
+              <div class="text-2xl mb-2">👤</div>
+              <div class="text-xs text-muted-foreground">暂无人员</div>
+            </div>
+            
+            <div v-else class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+              <div
+                v-for="person in persons.slice(0, 4)"
+                :key="person.id"
+                class="flex items-center justify-between p-2 bg-background rounded border hover:shadow-sm transition-shadow"
+              >
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center space-x-2">
+                    <div class="text-sm font-medium truncate">{{ person.name }}</div>
+                    <div
+                      v-if="person.ambassador_name"
+                      class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded"
+                    >
+                      {{ person.ambassador_name }}
+                    </div>
+                    <div
+                      v-else
+                      class="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-xs rounded"
+                    >
+                      无大使
+                    </div>
                   </div>
-                  <div
-                    v-else
-                    class="px-1.5 py-0.5 bg-gray-100 text-gray-700 text-xs rounded"
-                  >
-                    无大使
+                  <div v-if="person.info" class="text-xs text-muted-foreground mt-1 truncate">
+                    {{ person.info }}
                   </div>
                 </div>
-                <div v-if="person.info" class="text-xs text-muted-foreground mt-1 truncate">
-                  {{ person.info }}
+                
+                <div class="flex space-x-1">
+                  <button
+                    @click="startEdit(person)"
+                    :disabled="loading"
+                    class="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
+                    title="编辑"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    @click="handleDeletePerson(person)"
+                    :disabled="loading"
+                    class="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                    title="删除"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
               
-              <div class="flex space-x-1">
-                <button
-                  @click="startEdit(person)"
-                  :disabled="loading"
-                  class="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
-                  title="编辑"
-                >
-                  ✏️
-                </button>
-                <button
-                  @click="handleDeletePerson(person)"
-                  :disabled="loading"
-                  class="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors"
-                  title="删除"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-            
-            <!-- 显示更多提示 -->
-            <div v-if="persons.length > 4" class="text-center pt-2 border-t border-border">
-              <div class="text-xs text-muted-foreground">
-                还有 {{ persons.length - 4 }} 人，点击"查看全部"查看更多
+              <!-- 显示更多提示 -->
+              <div v-if="persons.length > 4" class="text-center pt-2 border-t border-border">
+                <div class="text-xs text-muted-foreground">
+                  还有 {{ persons.length - 4 }} 人，点击"查看全部"查看更多
+                </div>
               </div>
             </div>
           </div>
@@ -178,7 +118,7 @@
           </div>
           <button
             @click="showAmbassadorListModal = true"
-            class="px-3 py-1 text-xs bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+            class="px-3 py-1 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             🔍 查看全部
           </button>
@@ -307,6 +247,194 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加人员详细弹窗 -->
+    <div
+      v-if="showAddPersonModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      @click.self="showAddPersonModal = false"
+    >
+      <div class="bg-card rounded-lg w-full max-w-3xl mx-4 max-h-[90vh] border border-border shadow-lg">
+        <!-- 弹窗标题 -->
+        <div class="flex items-center justify-between p-6 border-b border-border">
+          <h4 class="text-lg font-semibold text-card-foreground">添加新人员</h4>
+          <button
+            @click="showAddPersonModal = false"
+            class="text-muted-foreground hover:text-foreground text-xl"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <!-- 弹窗内容 -->
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+          <form @submit.prevent="handleAddPerson" class="space-y-6">
+            <!-- 基本信息区域 -->
+            <div class="space-y-4">
+              <h5 class="text-md font-medium text-foreground border-b border-border pb-2">📝 基本信息</h5>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 姓名 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    姓名 <span class="text-destructive">*</span>
+                  </label>
+                  <input
+                    v-model="formData.name"
+                    type="text"
+                    maxlength="100"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    placeholder=""
+                    required
+                  />
+                  <div v-if="errors.name" class="text-xs text-destructive">
+                    {{ errors.name }}
+                  </div>
+                </div>
+
+                <!-- 职务 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    职务 <span class="text-destructive">*</span>
+                  </label>
+                  <select
+                    v-model="formData.position"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    required
+                  >
+                    <option :value="undefined">请选择职务</option>
+                    <option
+                      v-for="option in positionOptions"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <div v-if="errors.position" class="text-xs text-destructive">
+                    {{ errors.position }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- 联系信息 -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 电话 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    电话
+                  </label>
+                  <input
+                    v-model="formData.tel"
+                    type="tel"
+                    maxlength="30"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    placeholder=""
+                  />
+                  <div v-if="errors.tel" class="text-xs text-destructive">
+                    {{ errors.tel }}
+                  </div>
+                </div>
+
+                <!-- 背景 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    背景
+                  </label>
+                  <input
+                    v-model="formData.background"
+                    type="text"
+                    maxlength="255"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    placeholder=""
+                  />
+                  <div v-if="errors.background" class="text-xs text-destructive">
+                    {{ errors.background }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 关联信息区域 -->
+            <div class="space-y-4">
+              <h5 class="text-md font-medium text-foreground border-b border-border pb-2">🔗 关联信息</h5>
+              
+              <!-- 传播大使选择 -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-foreground">
+                  传播大使
+                </label>
+                <input
+                  :value="selectedAmbassadorName || ''"
+                  type="text"
+                  readonly
+                  :disabled="loading"
+                  class="w-full px-3 py-2 border border-input rounded-md bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 cursor-pointer"
+                  placeholder=""
+                  @click="showAmbassadorSelectModal = true"
+                />
+                <div v-if="errors.ambassador_id" class="text-xs text-destructive">
+                  {{ errors.ambassador_id }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 其他信息区域 -->
+            <div class="space-y-4">
+              <h5 class="text-md font-medium text-foreground border-b border-border pb-2">📄 其他信息</h5>
+              
+              <!-- 备注信息 -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-foreground">
+                  其他信息
+                </label>
+                <textarea
+                  v-model="formData.info"
+                  rows="4"
+                  maxlength="500"
+                  :disabled="loading"
+                  class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 resize-none"
+                  placeholder=""
+                ></textarea>
+                <div class="text-xs text-muted-foreground text-right">
+                  {{ (formData.info || '').length }}/500
+                </div>
+                <div v-if="errors.info" class="text-xs text-destructive">
+                  {{ errors.info }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 按钮区域 -->
+            <div class="flex space-x-3 pt-6 border-t border-border">
+              <button
+                type="button"
+                @click="showAddPersonModal = false"
+                :disabled="loading"
+                class="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-medium hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                :disabled="loading || !isFormValid"
+                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <div class="flex items-center justify-center space-x-2">
+                  <div v-if="loading" class="w-4 h-4 loading-spinner"></div>
+                  <span>{{ loading ? '添加中...' : '添加人员' }}</span>
+                  <div v-if="!loading">➕</div>
+                </div>
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -484,84 +612,185 @@
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click.self="cancelEdit"
     >
-      <div class="bg-card rounded-lg p-6 w-full max-w-md mx-4 border border-border shadow-lg">
-        <div class="flex items-center justify-between mb-4">
+      <div class="bg-card rounded-lg w-full max-w-3xl mx-4 max-h-[90vh] border border-border shadow-lg">
+        <!-- 弹窗标题 -->
+        <div class="flex items-center justify-between p-6 border-b border-border">
           <h4 class="text-lg font-semibold text-card-foreground">编辑人员信息</h4>
           <button
             @click="cancelEdit"
-            class="text-muted-foreground hover:text-foreground"
+            class="text-muted-foreground hover:text-foreground text-xl"
           >
             ✕
           </button>
         </div>
         
-        <form @submit.prevent="handleUpdatePerson" class="space-y-4">
-          <!-- 姓名 -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-foreground">
-              姓名 <span class="text-destructive">*</span>
-            </label>
-            <input
-              v-model="editForm.name"
-              type="text"
-              maxlength="100"
-              :disabled="loading"
-              class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
-              placeholder="请输入姓名"
-              required
-            />
-          </div>
+        <!-- 弹窗内容 -->
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+          <form @submit.prevent="handleUpdatePerson" class="space-y-6">
+            <!-- 基本信息区域 -->
+            <div class="space-y-4">
+              <h5 class="text-md font-medium text-foreground border-b border-border pb-2">📝 基本信息</h5>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 姓名 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    姓名 <span class="text-destructive">*</span>
+                  </label>
+                  <input
+                    v-model="editForm.name"
+                    type="text"
+                    maxlength="100"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    placeholder=""
+                    required
+                  />
+                  <div v-if="editErrors.name" class="text-xs text-destructive">
+                    {{ editErrors.name }}
+                  </div>
+                </div>
 
-          <!-- 传播大使选择 -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-foreground">
-              传播大使
-            </label>
-            <input
-              :value="editSelectedAmbassadorName"
-              type="text"
-              readonly
-              :disabled="loading"
-              class="w-full px-3 py-2 border border-input rounded-md bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              placeholder="点击选择传播大使（可选）"
-              @click="showEditAmbassadorSelectModal = true"
-            />
-          </div>
+                <!-- 职务 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    职务 <span class="text-destructive">*</span>
+                  </label>
+                  <select
+                    v-model="editForm.position"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    required
+                  >
+                    <option :value="undefined">请选择职务</option>
+                    <option
+                      v-for="option in positionOptions"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <div v-if="editErrors.position" class="text-xs text-destructive">
+                    {{ editErrors.position }}
+                  </div>
+                </div>
+              </div>
 
-          <!-- 其他信息 -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-foreground">
-              其他信息
-            </label>
-            <textarea
-              v-model="editForm.info"
-              rows="3"
-              maxlength="500"
-              :disabled="loading"
-              class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:opacity-50"
-              placeholder="职务、备注等（可选）"
-            ></textarea>
-          </div>
+              <!-- 联系信息 -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 电话 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    电话
+                  </label>
+                  <input
+                    v-model="editForm.tel"
+                    type="tel"
+                    maxlength="30"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    placeholder=""
+                  />
+                  <div v-if="editErrors.tel" class="text-xs text-destructive">
+                    {{ editErrors.tel }}
+                  </div>
+                </div>
 
-          <!-- 按钮组 -->
-          <div class="flex space-x-3 pt-4">
-            <button
-              type="button"
-              @click="cancelEdit"
-              :disabled="loading"
-              class="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-medium hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              :disabled="loading || !isEditFormValid"
-              class="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {{ loading ? '保存中...' : '保存' }}
-            </button>
-          </div>
-        </form>
+                <!-- 背景 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    背景
+                  </label>
+                  <input
+                    v-model="editForm.background"
+                    type="text"
+                    maxlength="255"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                    placeholder=""
+                  />
+                  <div v-if="editErrors.background" class="text-xs text-destructive">
+                    {{ editErrors.background }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 关联信息区域 -->
+            <div class="space-y-4">
+              <h5 class="text-md font-medium text-foreground border-b border-border pb-2">🔗 关联信息</h5>
+              
+              <!-- 传播大使选择 -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-foreground">
+                  传播大使
+                </label>
+                <input
+                  :value="editSelectedAmbassadorName || ''"
+                  type="text"
+                  readonly
+                  :disabled="loading"
+                  class="w-full px-3 py-2 border border-input rounded-md bg-muted text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 cursor-pointer"
+                  placeholder=""
+                  @click="showEditAmbassadorSelectModal = true"
+                />
+                <div v-if="editErrors.ambassador_id" class="text-xs text-destructive">
+                  {{ editErrors.ambassador_id }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 其他信息区域 -->
+            <div class="space-y-4">
+              <h5 class="text-md font-medium text-foreground border-b border-border pb-2">📄 其他信息</h5>
+              
+              <!-- 备注信息 -->
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-foreground">
+                  其他信息
+                </label>
+                <textarea
+                  v-model="editForm.info"
+                  rows="4"
+                  maxlength="500"
+                  :disabled="loading"
+                  class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50 resize-none"
+                  placeholder=""
+                ></textarea>
+                <div class="text-xs text-muted-foreground text-right">
+                  {{ (editForm.info || '').length }}/500
+                </div>
+                <div v-if="editErrors.info" class="text-xs text-destructive">
+                  {{ editErrors.info }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 按钮区域 -->
+            <div class="flex space-x-3 pt-6 border-t border-border">
+              <button
+                type="button"
+                @click="cancelEdit"
+                :disabled="loading"
+                class="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-md font-medium hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                :disabled="loading || !isEditFormValid"
+                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <div class="flex items-center justify-center space-x-2">
+                  <div v-if="loading" class="w-4 h-4 loading-spinner"></div>
+                  <span>{{ loading ? '保存中...' : '保存人员' }}</span>
+                  <div v-if="!loading">💾</div>
+                </div>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -1035,6 +1264,9 @@ const emit = defineEmits<Emits>()
 const formData = reactive<PersonCreateRequest>({
   name: '',
   ambassador_id: undefined,
+  position: undefined,
+  tel: '',
+  background: '',
   info: ''
 })
 
@@ -1043,6 +1275,9 @@ const editingPerson = ref<PersonWithAssignment | null>(null)
 const editForm = reactive<PersonUpdateRequest>({
   name: '',
   ambassador_id: undefined,
+  position: undefined,
+  tel: '',
+  background: '',
   info: ''
 })
 
@@ -1064,6 +1299,7 @@ const ambassadorCurrentPage = ref(1)            // 当前页码（传播大使�
 const ambassadorPageSize = 15                   // 传播大使每页显示15个
 
 // ============ 弹窗状态 ============
+const showAddPersonModal = ref(false)           // 添加人员弹窗显示状态
 const showPersonListModal = ref(false)          // 人员列表弹窗显示状态
 const showAmbassadorListModal = ref(false)      // 传播大使列表弹窗显示状态
 const showAmbassadorSelectModal = ref(false)    // 传播大使选择弹窗显示状态
@@ -1081,12 +1317,18 @@ const ambassadorSelectSearchQuery = ref('')      // 传播大使选择弹窗搜�
 
 // 表单验证错误
 const errors = reactive<Record<string, string>>({})
+const editErrors = reactive<Record<string, string>>({})
 const ambassadorErrors = reactive<Record<string, string>>({})
 
 // ============ 计算属性 ============
 const isFormValid = computed(() => {
-  return formData.name.trim().length > 0 && 
-         formData.name.trim().length <= 100 &&
+  const trimmedName = formData.name.trim()
+  
+  return trimmedName.length > 0 && 
+         trimmedName.length <= 100 &&
+         formData.position !== undefined && // 职务必填
+         (!formData.tel || formData.tel.trim().length <= 30) &&
+         (!formData.background || formData.background.trim().length <= 255) &&
          (!formData.info || formData.info.length <= 500)
 })
 
@@ -1117,11 +1359,31 @@ const editSelectedAmbassadorName = computed(() => {
 // 编辑表单验证
 const isEditFormValid = computed(() => {
   const trimmedName = editForm.name?.trim()
+  
   return !!trimmedName && 
          trimmedName.length > 0 && 
          trimmedName.length <= 100 &&
+         editForm.position !== undefined && // 职务必填
+         (!editForm.tel || editForm.tel.trim().length <= 30) &&
+         (!editForm.background || editForm.background.trim().length <= 255) &&
          (!editForm.info || editForm.info.length <= 500)
 })
+
+// 职务选项
+const positionOptions = [
+  { value: 1, label: '辅导员' },
+  { value: 2, label: '助攻手' },
+  { value: 3, label: '组长' },
+  { value: 4, label: '副组长' },
+  { value: 5, label: '学员' }
+]
+
+// 根据职务数字获取职务名称
+const getPositionName = (position?: number) => {
+  if (!position) return ''
+  const option = positionOptions.find(opt => opt.value === position)
+  return option ? option.label : ''
+}
 
 // 获取每个大使的学员列表
 const getAmbassadorStudents = computed(() => {
@@ -1278,7 +1540,35 @@ const handleAddPerson = () => {
     return
   }
   
+  // 验证职务
+  if (formData.position === undefined) {
+    errors.position = '职务不能为空，请选择职务'
+    return
+  }
   
+  // 检查姓名唯一性
+  const trimmedName = formData.name.trim()
+  const existingPerson = props.persons.find(p => 
+    p.name.toLowerCase() === trimmedName.toLowerCase()
+  )
+  if (existingPerson) {
+    errors.name = `姓名"${trimmedName}"已存在，请使用其他姓名`
+    return
+  }
+  
+  // 验证电话
+  if (formData.tel && formData.tel.trim().length > 30) {
+    errors.tel = '电话长度不能超过30个字符'
+    return
+  }
+  
+  // 验证背景
+  if (formData.background && formData.background.trim().length > 255) {
+    errors.background = '背景长度不能超过255个字符'
+    return
+  }
+  
+  // 验证其他信息
   if (formData.info && formData.info.length > 500) {
     errors.info = '其他信息长度不能超过500个字符'
     return
@@ -1286,13 +1576,17 @@ const handleAddPerson = () => {
   
   // 发送添加请求
   emit('add-person', {
-    name: formData.name.trim(),
+    name: trimmedName,
     ambassador_id: formData.ambassador_id === undefined ? null : formData.ambassador_id,
+    position: formData.position,
+    tel: formData.tel?.trim() || '',
+    background: formData.background?.trim() || '',
     info: formData.info?.trim() || ''
   })
   
-  // 重置表单
+  // 重置表单并关闭弹窗
   resetForm()
+  showAddPersonModal.value = false
 }
 
 /**
@@ -1302,18 +1596,75 @@ const startEdit = (person: PersonWithAssignment) => {
   editingPerson.value = person
   editForm.name = person.name
   editForm.ambassador_id = person.ambassador_id ?? undefined
+  editForm.position = person.position
+  editForm.tel = person.tel || ''
+  editForm.background = person.background || ''
   editForm.info = person.info || ''
+  // 清空编辑错误
+  Object.keys(editErrors).forEach(key => delete editErrors[key])
 }
 
 /**
  * 更新人员信息
  */
 const handleUpdatePerson = () => {
-  if (!editingPerson.value || !isEditFormValid.value) return
+  if (!editingPerson.value) return
+  
+  // 清空错误
+  Object.keys(editErrors).forEach(key => delete editErrors[key])
+  
+  // 验证表单
+  if (!editForm.name?.trim()) {
+    editErrors.name = '姓名不能为空'
+    return
+  }
+  
+  if (editForm.name.trim().length > 100) {
+    editErrors.name = '姓名长度不能超过100个字符'
+    return
+  }
+  
+  // 验证职务
+  if (editForm.position === undefined) {
+    editErrors.position = '职务不能为空，请选择职务'
+    return
+  }
+  
+  // 验证电话
+  if (editForm.tel && editForm.tel.trim().length > 30) {
+    editErrors.tel = '电话长度不能超过30个字符'
+    return
+  }
+  
+  // 验证背景
+  if (editForm.background && editForm.background.trim().length > 255) {
+    editErrors.background = '背景长度不能超过255个字符'
+    return
+  }
+  
+  // 验证其他信息
+  if (editForm.info && editForm.info.length > 500) {
+    editErrors.info = '其他信息长度不能超过500个字符'
+    return
+  }
+  
+  // 检查姓名唯一性（排除当前编辑的人员）
+  const trimmedName = editForm.name.trim()
+  const existingPerson = props.persons.find(p => 
+    p.name.toLowerCase() === trimmedName.toLowerCase() && 
+    p.id !== editingPerson.value!.id
+  )
+  if (existingPerson) {
+    editErrors.name = `姓名"${trimmedName}"已存在，请使用其他姓名`
+    return
+  }
   
   emit('update-person', editingPerson.value.id, {
-    name: editForm.name!.trim(),
+    name: trimmedName,
     ambassador_id: editForm.ambassador_id === undefined ? null : editForm.ambassador_id,
+    position: editForm.position,
+    tel: editForm.tel?.trim() || '',
+    background: editForm.background?.trim() || '',
     info: editForm.info?.trim() || ''
   })
   
@@ -1327,7 +1678,12 @@ const cancelEdit = () => {
   editingPerson.value = null
   editForm.name = ''
   editForm.ambassador_id = undefined
+  editForm.position = undefined
+  editForm.tel = ''
+  editForm.background = ''
   editForm.info = ''
+  // 清空编辑错误
+  Object.keys(editErrors).forEach(key => delete editErrors[key])
 }
 
 /**
@@ -1343,6 +1699,9 @@ const handleDeletePerson = (person: PersonWithAssignment) => {
 const resetForm = () => {
   formData.name = ''
   formData.ambassador_id = undefined
+  formData.position = undefined
+  formData.tel = ''
+  formData.background = ''
   formData.info = ''
   Object.keys(errors).forEach(key => delete errors[key])
 }
@@ -1367,9 +1726,19 @@ const handleAddAmbassador = () => {
     return
   }
   
+  // 检查传播大使姓名唯一性
+  const trimmedAmbassadorName = ambassadorFormData.name.trim()
+  const existingAmbassador = props.ambassadors.find(a => 
+    a.name.toLowerCase() === trimmedAmbassadorName.toLowerCase()
+  )
+  if (existingAmbassador) {
+    ambassadorErrors.name = `传播大使姓名"${trimmedAmbassadorName}"已存在，请使用其他姓名`
+    return
+  }
+  
   // 发送添加请求
   emit('add-ambassador', {
-    name: ambassadorFormData.name.trim()
+    name: trimmedAmbassadorName
   })
   
   // 重置表单
@@ -1390,8 +1759,21 @@ const startEditAmbassador = (ambassador: Ambassador) => {
 const handleUpdateAmbassador = () => {
   if (!editingAmbassador.value || !editAmbassadorForm.name?.trim()) return
   
+  const trimmedAmbassadorName = editAmbassadorForm.name.trim()
+  
+  // 检查传播大使姓名唯一性（排除当前编辑的传播大使）
+  const existingAmbassador = props.ambassadors.find(a => 
+    a.name.toLowerCase() === trimmedAmbassadorName.toLowerCase() && 
+    a.id !== editingAmbassador.value!.id
+  )
+  if (existingAmbassador) {
+    // 这里可以添加错误提示，但由于编辑传播大使模态框比较简单，我们用alert显示
+    alert(`传播大使姓名"${trimmedAmbassadorName}"已存在，请使用其他姓名`)
+    return
+  }
+  
   emit('update-ambassador', editingAmbassador.value.id, {
-    name: editAmbassadorForm.name.trim()
+    name: trimmedAmbassadorName
   })
   
   cancelEditAmbassador()

@@ -15,7 +15,10 @@ export interface Person {
   id: number;                    // 主键ID
   name: string;                  // 姓名
   ambassador_id?: number;        // 传播大使ID（可选）
-  info?: string;                 // 其他信息（JSON字符串格式）
+  position?: number;             // 职务：1辅导员 2助攻手 3组长 4副组长 5学员
+  tel?: string;                  // 电话
+  background?: string;           // 背景
+  info?: string;                 // 其他信息
   created_at: string;            // 创建时间
 }
 
@@ -37,12 +40,18 @@ export interface ConfigUpdateRequest {
 export interface PersonCreateRequest {
   name: string;                  // 姓名
   ambassador_id?: number | null; // 传播大使ID (null表示无传播大使)
+  position?: number;             // 职务：1辅导员 2助攻手 3组长 4副组长 5学员
+  tel?: string;                  // 电话
+  background?: string;           // 背景
   info?: string;                 // 其他信息
 }
 
 export interface PersonUpdateRequest {
   name?: string;                 // 姓名
   ambassador_id?: number | null; // 传播大使ID (null表示无传播大使)
+  position?: number;             // 职务：1辅导员 2助攻手 3组长 4副组长 5学员
+  tel?: string;                  // 电话
+  background?: string;           // 背景
   info?: string;                 // 其他信息
 }
 

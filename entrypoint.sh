@@ -1,13 +1,19 @@
 #!/bin/bash
 
 # 座位管理系统启动脚本
-# 适用于 Sealos DevBox 环境 - 遵循最佳实践，只负责启动应用
+# 适用于 Sealos DevBox 环境 - 支持测试和生产环境部署
+# 使用方法: bash entrypoint.sh [development|production]
+# 默认: production
 
 set -e  # 遇到错误立即退出
+
+# 获取环境参数（第一个参数）
+ENV_MODE=${1:-production}
 
 echo "🚀 启动座位管理系统..."
 echo "📅 启动时间: $(date)"
 echo "📍 当前目录: $(pwd)"
+echo "🌍 部署环境: $ENV_MODE"
 
 # 检查必需的构建产物
 if [ ! -d "dist" ]; then
@@ -32,7 +38,15 @@ echo "✅ Node.js 版本: $(node -v)"
 
 # 检查和创建环境配置文件
 if [ ! -f ".env" ]; then
-    if [ -f "server.env" ]; then
+    if [ "$ENV_MODE" = "development" ] && [ -f "development.env" ]; then
+        echo "📋 使用开发/测试环境配置"
+        cp development.env .env
+        echo "✅ 开发环境配置已设置"
+    elif [ "$ENV_MODE" = "production" ] && [ -f "production.env" ]; then
+        echo "📋 使用生产环境配置"
+        cp production.env .env
+        echo "✅ 生产环境配置已设置"
+    elif [ -f "server.env" ]; then
         echo "📋 使用服务器配置 server.env"
         cp server.env .env
         echo "✅ 环境配置已设置"
@@ -44,15 +58,16 @@ else
     echo "✅ 发现现有 .env 文件"
 fi
 
-# 显示数据库配置信息（用于调试）
-if [ -f ".env" ]; then
-    echo "🔍 当前数据库配置："
-    grep "DB_HOST" .env || echo "⚠️ 未找到 DB_HOST 配置"
-    grep "DB_NAME" .env || echo "⚠️ 未找到 DB_NAME 配置"
+# 根据环境模式设置 NODE_ENV
+if [ "$ENV_MODE" = "development" ]; then
+    export NODE_ENV=development
+    echo "🔧 运行模式: 开发/测试环境"
+    echo "📊 数据库将连接: dbconn.sealoshzh.site:39174"
+else
+    export NODE_ENV=production
+    echo "🔧 运行模式: 生产环境"
+    echo "📊 数据库将连接: zuowei-postgresql.ns-9z2wbi7z.svc:5432"
 fi
-
-# 设置生产环境
-export NODE_ENV=production
 
 # 启动应用
 echo "🚀 启动座位管理系统..."

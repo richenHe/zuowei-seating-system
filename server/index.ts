@@ -9,6 +9,7 @@ import configRoutes from './routes/config.js';        // 配置管理路由
 import personsRoutes from './routes/persons.js';      // 人员管理路由
 import ambassadorsRoutes from './routes/ambassadors.js'; // 传播大使管理路由
 import assignmentsRoutes from './routes/assignments.js'; // 座位分配路由
+import exportRoutes from './routes/export.js';        // 导出功能路由
 
 // 获取当前文件目录（ES模块兼容）
 const __filename = fileURLToPath(import.meta.url);
@@ -41,6 +42,7 @@ app.use('/api/config', configRoutes);           // 配置相关API
 app.use('/api/persons', personsRoutes);         // 人员管理API
 app.use('/api/ambassadors', ambassadorsRoutes); // 传播大使管理API
 app.use('/api/assignments', assignmentsRoutes); // 座位分配API
+app.use('/api/export', exportRoutes);           // 导出功能API
 
 // 健康检查接口
 app.get('/api/health', async (req, res) => {

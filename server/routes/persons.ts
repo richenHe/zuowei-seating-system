@@ -8,7 +8,8 @@ const router = Router();
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT p.*, a.name as ambassador_name, sa.desk_number, sa.seat_number
+      SELECT p.id, p.name, p.ambassador_id, p.position, p.tel, p.background, p.info, p.created_at,
+             a.name as ambassador_name, sa.desk_number, sa.seat_number
       FROM persons p
       LEFT JOIN ambassadors a ON p.ambassador_id = a.id
       LEFT JOIN seat_assignments sa ON p.id = sa.person_id
@@ -35,7 +36,7 @@ router.get('/', async (req, res) => {
 // POST /api/persons - 添加人员
 router.post('/', async (req, res) => {
   try {
-    const { name, ambassador_id, info }: PersonCreateRequest = req.body;
+    const { name, ambassador_id, position, tel, background, info }: PersonCreateRequest = req.body;
 
     // 参数验证
     if (!name || name.trim().length === 0) {
@@ -50,6 +51,24 @@ router.post('/', async (req, res) => {
       const response: ApiResponse = {
         success: false,
         error: '姓名长度不能超过100字符'
+      };
+      return res.status(400).json(response);
+    }
+
+    // 验证电话长度
+    if (tel && tel.trim().length > 30) {
+      const response: ApiResponse = {
+        success: false,
+        error: '电话长度不能超过30字符'
+      };
+      return res.status(400).json(response);
+    }
+
+    // 验证背景长度
+    if (background && background.trim().length > 255) {
+      const response: ApiResponse = {
+        success: false,
+        error: '背景长度不能超过255字符'
       };
       return res.status(400).json(response);
     }
@@ -72,10 +91,17 @@ router.post('/', async (req, res) => {
 
     // 插入新人员
     const result = await pool.query(`
-      INSERT INTO persons (name, ambassador_id, info, created_at)
-      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      INSERT INTO persons (name, ambassador_id, position, tel, background, info, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
       RETURNING *
-    `, [name.trim(), ambassador_id || null, info || null]);
+    `, [
+      name.trim(), 
+      ambassador_id || null, 
+      position || null, 
+      tel?.trim() || null, 
+      background?.trim() || null, 
+      info?.trim() || null
+    ]);
 
     const person: Person = result.rows[0];
     const response: ApiResponse<Person> = {
@@ -99,7 +125,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const personId = parseInt(req.params.id);
-    const { name, ambassador_id, info }: PersonUpdateRequest = req.body;
+    const { name, ambassador_id, position, tel, background, info }: PersonUpdateRequest = req.body;
 
     // 参数验证
     if (isNaN(personId)) {
@@ -137,6 +163,13 @@ router.put('/:id', async (req, res) => {
         };
         return res.status(400).json(response);
       }
+      if (name.length > 100) {
+        const response: ApiResponse = {
+          success: false,
+          error: '姓名长度不能超过100字符'
+        };
+        return res.status(400).json(response);
+      }
       updateFields.push(`name = $${paramIndex}`);
       values.push(name.trim());
       paramIndex++;
@@ -164,9 +197,41 @@ router.put('/:id', async (req, res) => {
       paramIndex++;
     }
 
+    if (position !== undefined) {
+      updateFields.push(`position = $${paramIndex}`);
+      values.push(position || null);
+      paramIndex++;
+    }
+
+    if (tel !== undefined) {
+      if (tel && tel.trim().length > 30) {
+        const response: ApiResponse = {
+          success: false,
+          error: '电话长度不能超过30字符'
+        };
+        return res.status(400).json(response);
+      }
+      updateFields.push(`tel = $${paramIndex}`);
+      values.push(tel?.trim() || null);
+      paramIndex++;
+    }
+
+    if (background !== undefined) {
+      if (background && background.trim().length > 255) {
+        const response: ApiResponse = {
+          success: false,
+          error: '背景长度不能超过255字符'
+        };
+        return res.status(400).json(response);
+      }
+      updateFields.push(`background = $${paramIndex}`);
+      values.push(background?.trim() || null);
+      paramIndex++;
+    }
+
     if (info !== undefined) {
       updateFields.push(`info = $${paramIndex}`);
-      values.push(info || null);
+      values.push(info?.trim() || null);
       paramIndex++;
     }
 
