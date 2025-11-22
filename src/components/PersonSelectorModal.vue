@@ -149,7 +149,7 @@ const emit = defineEmits<Emits>()
 
 // ============ 响应式状态 ============
 const currentPage = ref(1)                      // 当前页码
-const pageSize = 20                             // 每页显示20个人员
+const pageSize = 15                             // 每页显示15个人员
 const searchQuery = ref('')                     // 搜索关键词
 
 // ============ 计算属性 ============

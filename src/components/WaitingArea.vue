@@ -177,7 +177,7 @@ const selectedPerson = ref<PersonWithAssignment | null>(null) // 查看详情的
 
 // ============ 分页相关 ============
 const currentPage = ref(1)                      // 当前页码
-const pageSize = 20                             // 每页显示20个
+const pageSize = 15                             // 每页显示15个
 
 // ============ 计算属性 ============
 const hasSelection = computed(() => selectedPersons.value.size > 0)

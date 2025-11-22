@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../config/database.js';
-import { Person, PersonCreateRequest, PersonUpdateRequest, PersonWithAssignment, ApiResponse } from '../models/types.js';
+import { Person, PersonCreateRequest, PersonUpdateRequest, PersonWithAssignment, ApiResponse, PersonImportRow, PersonImportResult, PersonImportValidationError } from '../models/types.js';
 
 const router = Router();
 
@@ -28,6 +28,55 @@ router.get('/', async (req, res) => {
     const response: ApiResponse = {
       success: false,
       error: '获取人员列表失败'
+    };
+    res.status(500).json(response);
+  }
+});
+
+// GET /api/persons/search - 模糊查询人员（返回姓名和桌号）
+router.get('/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    // 参数验证
+    if (!query || typeof query !== 'string' || query.trim().length === 0) {
+      const response: ApiResponse = {
+        success: false,
+        error: '查询关键词不能为空'
+      };
+      return res.status(400).json(response);
+    }
+
+    const keyword = query.trim();
+
+    // 模糊查询人员（按姓名匹配）
+    const result = await pool.query(`
+      SELECT p.id, p.name, sa.desk_number, sa.seat_number
+      FROM persons p
+      LEFT JOIN seat_assignments sa ON p.id = sa.person_id
+      WHERE p.name ILIKE $1
+      ORDER BY sa.desk_number ASC NULLS LAST, p.name ASC
+      LIMIT 50
+    `, [`%${keyword}%`]);
+
+    const searchResults = result.rows.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      desk_number: row.desk_number,
+      seat_number: row.seat_number
+    }));
+
+    const response: ApiResponse = {
+      success: true,
+      data: searchResults
+    };
+    
+    res.json(response);
+  } catch (error) {
+    console.error('模糊查询人员失败:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: '模糊查询人员失败'
     };
     res.status(500).json(response);
   }
@@ -267,6 +316,261 @@ router.put('/:id', async (req, res) => {
       error: '更新人员信息失败'
     };
     res.status(500).json(response);
+  }
+});
+
+// POST /api/persons/batch-import - 批量导入人员
+router.post('/batch-import', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { data }: { data: PersonImportRow[] } = req.body;
+
+    // 参数验证
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      const response: ApiResponse = {
+        success: false,
+        error: '导入数据不能为空'
+      };
+      return res.status(400).json(response);
+    }
+
+    // 限制单次导入数量
+    if (data.length > 1000) {
+      const response: ApiResponse = {
+        success: false,
+        error: '单次导入数量不能超过1000条'
+      };
+      return res.status(400).json(response);
+    }
+
+    // 职务映射表
+    const positionMap: Record<string, number> = {
+      '辅导员': 1,
+      '助攻手': 2,
+      '组长': 3,
+      '副组长': 4,
+      '学员': 5
+    };
+
+    // 验证阶段
+    const errors: PersonImportValidationError[] = [];
+    const validRows: Array<{ row: number; data: PersonImportRow }> = [];
+
+    // 获取现有人员姓名（用于去重）
+    const existingPersonsResult = await client.query('SELECT name FROM persons');
+    const existingNames = new Set(existingPersonsResult.rows.map((row: any) => row.name.toLowerCase()));
+
+    // 逐行验证
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNumber = i + 2; // Excel中的实际行号（假设第1行是表头）
+      let hasError = false;
+
+      // 验证姓名
+      if (!row.name || row.name.trim().length === 0) {
+        errors.push({
+          row: rowNumber,
+          field: '姓名',
+          message: `第${rowNumber}行：姓名为空，需要添加`
+        });
+        hasError = true;
+      } else if (row.name.trim().length > 100) {
+        errors.push({
+          row: rowNumber,
+          field: '姓名',
+          message: `第${rowNumber}行：姓名长度不能超过100个字符`
+        });
+        hasError = true;
+      }
+
+      // 验证职务
+      if (!row.position || row.position.trim().length === 0) {
+        errors.push({
+          row: rowNumber,
+          field: '职务',
+          message: `第${rowNumber}行（${row.name}）：职务为空，需要添加`
+        });
+        hasError = true;
+      } else if (!positionMap[row.position.trim()]) {
+        errors.push({
+          row: rowNumber,
+          field: '职务',
+          message: `第${rowNumber}行（${row.name}）：职务"${row.position}"无效，必须是：辅导员、助攻手、组长、副组长、学员`
+        });
+        hasError = true;
+      }
+
+      // 验证传播大使
+      if (!row.ambassador_name || row.ambassador_name.trim().length === 0) {
+        errors.push({
+          row: rowNumber,
+          field: '传播大使',
+          message: `第${rowNumber}行（${row.name}）：传播大使为空，需要添加`
+        });
+        hasError = true;
+      } else if (row.ambassador_name.trim().length > 100) {
+        errors.push({
+          row: rowNumber,
+          field: '传播大使',
+          message: `第${rowNumber}行（${row.name}）：传播大使姓名长度不能超过100个字符`
+        });
+        hasError = true;
+      }
+
+      // 验证电话
+      if (row.tel && row.tel.trim().length > 30) {
+        errors.push({
+          row: rowNumber,
+          field: '电话',
+          message: `第${rowNumber}行（${row.name}）：电话长度不能超过30个字符`
+        });
+        hasError = true;
+      }
+
+      // 验证背景
+      if (row.background && row.background.trim().length > 255) {
+        errors.push({
+          row: rowNumber,
+          field: '背景',
+          message: `第${rowNumber}行（${row.name}）：背景长度不能超过255个字符`
+        });
+        hasError = true;
+      }
+
+      // 验证其他信息
+      if (row.info && row.info.length > 500) {
+        errors.push({
+          row: rowNumber,
+          field: '其他信息',
+          message: `第${rowNumber}行（${row.name}）：其他信息长度不能超过500个字符`
+        });
+        hasError = true;
+      }
+
+      // 如果没有错误，添加到有效行列表
+      if (!hasError) {
+        validRows.push({ row: rowNumber, data: row });
+      }
+    }
+
+    // 如果有验证错误，返回错误信息
+    if (errors.length > 0) {
+      const result: PersonImportResult = {
+        total: data.length,
+        success: 0,
+        skipped: 0,
+        failed: errors.length,
+        errors: errors,
+        message: `验证失败：发现 ${errors.length} 个错误，请修正后重新导入`
+      };
+      const response: ApiResponse<PersonImportResult> = {
+        success: false,
+        data: result,
+        error: `验证失败：发现 ${errors.length} 个错误`
+      };
+      return res.status(400).json(response);
+    }
+
+    // 开始导入
+    await client.query('BEGIN');
+
+    let successCount = 0;
+    let skippedCount = 0;
+    const importErrors: PersonImportValidationError[] = [];
+
+    for (const { row: rowNumber, data: rowData } of validRows) {
+      try {
+        const trimmedName = rowData.name.trim();
+        
+        // 检查姓名是否重复（跳过）
+        if (existingNames.has(trimmedName.toLowerCase())) {
+          skippedCount++;
+          continue;
+        }
+
+        const ambassadorName = rowData.ambassador_name!.trim();
+        const positionValue = positionMap[rowData.position!.trim()];
+
+        // 查询或创建传播大使
+        let ambassadorId: number;
+        const ambassadorResult = await client.query(
+          'SELECT id FROM ambassadors WHERE LOWER(name) = LOWER($1)',
+          [ambassadorName]
+        );
+
+        if (ambassadorResult.rows.length > 0) {
+          // 传播大使已存在
+          ambassadorId = ambassadorResult.rows[0].id;
+        } else {
+          // 创建新的传播大使
+          const newAmbassadorResult = await client.query(
+            'INSERT INTO ambassadors (name, created_at) VALUES ($1, CURRENT_TIMESTAMP) RETURNING id',
+            [ambassadorName]
+          );
+          ambassadorId = newAmbassadorResult.rows[0].id;
+        }
+
+        // 插入人员
+        await client.query(
+          `INSERT INTO persons (name, ambassador_id, position, tel, background, info, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
+          [
+            trimmedName,
+            ambassadorId,
+            positionValue,
+            rowData.tel?.trim() || null,
+            rowData.background?.trim() || null,
+            rowData.info?.trim() || null
+          ]
+        );
+
+        // 添加到已存在名单中，防止同一批次中的重复
+        existingNames.add(trimmedName.toLowerCase());
+        successCount++;
+
+      } catch (error) {
+        console.error(`导入第${rowNumber}行失败:`, error);
+        importErrors.push({
+          row: rowNumber,
+          field: '导入',
+          message: `第${rowNumber}行（${rowData.name}）：导入失败 - ${error instanceof Error ? error.message : '未知错误'}`
+        });
+      }
+    }
+
+    // 提交事务
+    await client.query('COMMIT');
+
+    // 构建结果
+    const result: PersonImportResult = {
+      total: data.length,
+      success: successCount,
+      skipped: skippedCount,
+      failed: importErrors.length,
+      errors: importErrors,
+      message: `导入完成：成功 ${successCount} 条，跳过重复 ${skippedCount} 条${importErrors.length > 0 ? `，失败 ${importErrors.length} 条` : ''}`
+    };
+
+    const response: ApiResponse<PersonImportResult> = {
+      success: true,
+      data: result,
+      message: result.message
+    };
+
+    res.json(response);
+
+  } catch (error) {
+    // 回滚事务
+    await client.query('ROLLBACK');
+    console.error('批量导入失败:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: '批量导入失败'
+    };
+    res.status(500).json(response);
+  } finally {
+    client.release();
   }
 });
 

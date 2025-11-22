@@ -15,7 +15,7 @@ if (isProduction) {
 // 数据库配置 - 从环境变量中读取
 const dbConfig = {
   host: process.env.DB_HOST || (isProduction ? 'zuowei-postgresql.ns-9z2wbi7z.svc' : 'dbconn.sealoshzh.site'),
-  port: parseInt(process.env.DB_PORT || (isProduction ? '5432' : '39174')),
+  port: parseInt(process.env.DB_PORT || (isProduction ? '5432' : '40441')),
   database: process.env.DB_NAME || 'postgres',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'xhzpk9wm',

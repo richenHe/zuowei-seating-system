@@ -1,15 +1,96 @@
 <template>
-  <div class="bg-card rounded-lg border border-border p-6 shadow-sm min-h-96">
+  <div 
+    :class="[
+      'bg-card rounded-lg border border-border shadow-sm min-h-96',
+      isFullscreen ? 'fixed inset-0 z-[9999] p-8 overflow-auto' : 'p-6'
+    ]"
+  >
     <!-- 标题 -->
     <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center space-x-2">
-        <div class="text-lg">🪑</div>
-        <h3 class="text-lg font-semibold text-card-foreground">座位区域</h3>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+          <div class="text-lg">🪑</div>
+          <h3 class="text-lg font-semibold text-card-foreground">座位区域</h3>
+        </div>
+        
+        <!-- 模糊查询搜索框 -->
+        <div class="relative">
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              @input="handleSearch"
+              @focus="showSearchDropdown = true"
+              @blur="handleSearchBlur"
+              type="text"
+              placeholder="搜索人员..."
+              class="pl-9 pr-4 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-64"
+            />
+            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+              🔍
+            </div>
+          </div>
+          
+          <!-- 搜索结果下拉框 -->
+          <div
+            v-if="showSearchDropdown && searchResults.length > 0"
+            class="absolute z-50 mt-1 w-full bg-white border border-border rounded-md shadow-lg max-h-80 overflow-y-auto"
+          >
+            <div
+              v-for="result in searchResults"
+              :key="result.id"
+              @mousedown="handleSelectPerson(result)"
+              class="px-4 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+            >
+              <div class="font-medium text-sm text-foreground">{{ result.name }}</div>
+              <div class="text-xs text-muted-foreground mt-1">
+                <span v-if="result.desk_number">
+                  桌号：{{ result.desk_number }}
+                </span>
+                <span v-else class="text-amber-600">
+                  未分配座位
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 无结果提示 -->
+          <div
+            v-if="showSearchDropdown && searchQuery && searchResults.length === 0 && !searchLoading"
+            class="absolute z-50 mt-1 w-full bg-white border border-border rounded-md shadow-lg px-4 py-3"
+          >
+            <div class="text-sm text-muted-foreground text-center">
+              未找到匹配的人员
+            </div>
+          </div>
+          
+          <!-- 加载状态 -->
+          <div
+            v-if="searchLoading"
+            class="absolute z-50 mt-1 w-full bg-white border border-border rounded-md shadow-lg px-4 py-3"
+          >
+            <div class="text-sm text-muted-foreground text-center">
+              搜索中...
+            </div>
+          </div>
+        </div>
       </div>
       
-      <!-- 配置信息 -->
-      <div v-if="config" class="text-sm text-muted-foreground">
-        {{ config.desk_count }} 桌 × {{ config.seats_per_desk }} 座位
+      <div class="flex items-center space-x-4">
+        <!-- 配置信息 -->
+        <div v-if="config" class="text-sm text-muted-foreground">
+          {{ config.desk_count }} 桌 × {{ config.seats_per_desk }} 座位
+        </div>
+        
+        <!-- 缩放按钮 -->
+        <button
+          @click="toggleFullscreen"
+          class="px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center space-x-2"
+          :title="isFullscreen ? '退出全屏' : '全屏显示'"
+        >
+          <span v-if="isFullscreen">🔙</span>
+          <span v-else>🔍</span>
+          <span>{{ isFullscreen ? '退出全屏' : '全屏查看' }}</span>
+        </button>
       </div>
     </div>
 
@@ -33,7 +114,10 @@
     <div v-else class="seating-layout">
       <!-- 滚动容器 - 4列时限制显示宽度 -->
       <div 
-        class="seating-scroll-container overflow-auto max-h-[70vh] border border-border rounded-lg"
+        :class="[
+          'seating-scroll-container overflow-auto border border-border rounded-lg',
+          isFullscreen ? 'max-h-none' : 'max-h-[70vh]'
+        ]"
         :style="scrollContainerStyle"
       >
         <!-- 座位网格 -->
@@ -91,19 +175,22 @@
             <div
               v-if="props.config && props.config.seats_per_desk > 0"
               :key="`${desk.desk_number}-top-0`"
-              :class="getSeatSide(0)"
+              :class="[getSeatSide(0), isFullscreen ? 'fullscreen-view-mode' : '']"
               class="seat-position"
-              :draggable="!!getSeat(desk, 0)?.person"
+              :draggable="!isFullscreen && !!getSeat(desk, 0)?.person"
               @click="handleSeatClick(getSeat(desk, 0)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 0)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
               @dragleave="handleSeatDragLeave"
               @drop="handleSeatDrop($event, getSeat(desk, 0)!)"
-              @mouseenter="showTooltip($event, getSeat(desk, 0)!)"
+              @mouseenter="handleSeatMouseEnter($event, getSeat(desk, 0)!)"
               @mouseleave="hideTooltip"
             >
-              <div class="seat-avatar">
+              <div 
+                class="seat-avatar"
+                :class="{ 'highlighted-person': getSeat(desk, 0)?.person?.id === highlightedPersonId }"
+              >
                 <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 0)?.person">
                   <div class="avatar-container">
@@ -214,19 +301,22 @@
              <div
                v-for="seatIndex in leftSeatsCount"
                :key="`${desk.desk_number}-left-${seatIndex}`"
-              :class="getSeatSide(1 + seatIndex - 1)"
+              :class="[getSeatSide(1 + seatIndex - 1), isFullscreen ? 'fullscreen-view-mode' : '']"
               class="seat-position"
-              :draggable="!!getSeat(desk, 1 + seatIndex - 1)?.person"
+              :draggable="!isFullscreen && !!getSeat(desk, 1 + seatIndex - 1)?.person"
               @click="handleSeatClick(getSeat(desk, 1 + seatIndex - 1)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 1 + seatIndex - 1)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
               @dragleave="handleSeatDragLeave"
               @drop="handleSeatDrop($event, getSeat(desk, 1 + seatIndex - 1)!)"
-              @mouseenter="showTooltip($event, getSeat(desk, 1 + seatIndex - 1)!)"
+              @mouseenter="handleSeatMouseEnter($event, getSeat(desk, 1 + seatIndex - 1)!)"
             @mouseleave="hideTooltip"
           >
-              <div class="seat-avatar">
+              <div 
+                class="seat-avatar"
+                :class="{ 'highlighted-person': getSeat(desk, 1 + seatIndex - 1)?.person?.id === highlightedPersonId }"
+              >
             <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 1 + seatIndex - 1)?.person">
                   <div class="avatar-container">
@@ -337,19 +427,22 @@
             <div
               v-for="seatIndex in rightSeatsCount"
               :key="`${desk.desk_number}-right-${seatIndex}`"
-              :class="getSeatSide(1 + leftSeatsCount + seatIndex - 1)"
+              :class="[getSeatSide(1 + leftSeatsCount + seatIndex - 1), isFullscreen ? 'fullscreen-view-mode' : '']"
               class="seat-position"
-              :draggable="!!getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person"
+              :draggable="!isFullscreen && !!getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person"
               @click="handleSeatClick(getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
               @dragleave="handleSeatDragLeave"
               @drop="handleSeatDrop($event, getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!)"
-              @mouseenter="showTooltip($event, getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!)"
+              @mouseenter="handleSeatMouseEnter($event, getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)!)"
               @mouseleave="hideTooltip"
             >
-              <div class="seat-avatar">
+              <div 
+                class="seat-avatar"
+                :class="{ 'highlighted-person': getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person?.id === highlightedPersonId }"
+              >
                 <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 1 + leftSeatsCount + seatIndex - 1)?.person">
                   <div class="avatar-container">
@@ -460,19 +553,22 @@
             <div
               v-if="props.config && props.config.seats_per_desk > 1"
               :key="`${desk.desk_number}-bottom-${1 + leftSeatsCount + rightSeatsCount}`"
-              :class="getSeatSide(1 + leftSeatsCount + rightSeatsCount)"
+              :class="[getSeatSide(1 + leftSeatsCount + rightSeatsCount), isFullscreen ? 'fullscreen-view-mode' : '']"
               class="seat-position"
-              :draggable="!!getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person"
+              :draggable="!isFullscreen && !!getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person"
               @click="handleSeatClick(getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!, $event)"
               @dragstart="handleSeatDragStart($event, getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!)"
               @dragend="handleSeatDragEnd"
               @dragover="handleSeatDragOver"
               @dragleave="handleSeatDragLeave"
               @drop="handleSeatDrop($event, getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!)"
-              @mouseenter="showTooltip($event, getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!)"
+              @mouseenter="handleSeatMouseEnter($event, getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)!)"
               @mouseleave="hideTooltip"
             >
-              <div class="seat-avatar">
+              <div 
+                class="seat-avatar"
+                :class="{ 'highlighted-person': getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person?.id === highlightedPersonId }"
+              >
                 <!-- 有人的座位 -->
                 <template v-if="getSeat(desk, 1 + leftSeatsCount + rightSeatsCount)?.person">
                   <div class="avatar-container">
@@ -582,12 +678,12 @@
       </div>
       
       <!-- 滚动提示 -->
-      <div v-if="isScrollable" class="mt-2 text-xs text-muted-foreground text-center">
+      <div v-if="isScrollable && !isFullscreen" class="mt-2 text-xs text-muted-foreground text-center">
         💡 当前{{ (config?.display_columns || 3) }}列，可左右滚动查看更多桌位
       </div>
 
       <!-- 座位统计 -->
-      <div class="mt-6 pt-4 border-t border-border">
+      <div v-if="!isFullscreen" class="mt-6 pt-4 border-t border-border">
         <div class="flex items-center justify-between text-sm">
           <div class="text-muted-foreground">
             座位统计
@@ -633,7 +729,7 @@
 
     <!-- 添加至备选区域标签 -->
     <div
-      v-show="addToWaitingVisible"
+      v-show="addToWaitingVisible && !isFullscreen"
       class="fixed z-50 pointer-events-none"
       :style="{
         left: addToWaitingPosition.x + 'px',
@@ -656,7 +752,7 @@
 
     <!-- 人员选择浮窗 -->
     <PersonSelectorModal
-      :visible="selectorVisible"
+      :visible="selectorVisible && !isFullscreen"
       :waiting-persons="waitingPersons"
       :target-seat="selectedSeat"
       @close="closeSelectorModal"
@@ -670,6 +766,7 @@ import { ref, computed, nextTick } from 'vue'
 import PersonSelectorModal from './PersonSelectorModal.vue'
 import type { Config, DeskLayout, SeatInfo, PersonWithAssignment } from '@/types'
 import { useDragAndDrop } from '@/composables/useDragAndDrop'
+import { searchPersons, type PersonSearchResult } from '@/api'
 
 // ============ Props ============
 interface Props {
@@ -761,6 +858,19 @@ const selectedSeat = ref<SeatInfo>({
   seat_number: 0,
   person: undefined
 })
+
+// 全屏状态
+const isFullscreen = ref(false)
+
+// 搜索相关状态
+const searchQuery = ref('')
+const searchResults = ref<PersonSearchResult[]>([])
+const showSearchDropdown = ref(false)
+const searchLoading = ref(false)
+let searchTimeout: number | null = null
+
+// 高亮显示相关状态
+const highlightedPersonId = ref<number | null>(null)
 
 // ============ 计算属性 ============
 
@@ -977,9 +1087,31 @@ const handleAddToWaiting = () => {
 }
 
 /**
+ * 切换全屏显示
+ */
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value
+  
+  if (isFullscreen.value) {
+    // 进入全屏时，禁止页面滚动
+    document.body.style.overflow = 'hidden'
+    console.log('🔍 进入全屏模式')
+  } else {
+    // 退出全屏时，恢复页面滚动
+    document.body.style.overflow = ''
+    console.log('🔙 退出全屏模式')
+  }
+}
+
+/**
  * 处理座位点击
  */
 const handleSeatClick = (seat: SeatInfo, event?: MouseEvent) => {
+  // 全屏模式下禁用点击交互
+  if (isFullscreen.value) {
+    return
+  }
+  
   // 如果座位为空且有备选人员，显示人员选择浮窗
   if (!seat.person && props.waitingPersons.length > 0) {
     selectedSeat.value = seat
@@ -1000,6 +1132,12 @@ const handleSeatClick = (seat: SeatInfo, event?: MouseEvent) => {
  * 处理座位拖拽开始
  */
 const handleSeatDragStart = (event: DragEvent, seat: SeatInfo) => {
+  // 全屏模式下禁用拖拽
+  if (isFullscreen.value) {
+    event.preventDefault()
+    return
+  }
+  
   if (!seat.person) {
     console.warn('⚠️ 座位为空，无法拖拽')
     return
@@ -1026,6 +1164,11 @@ const handleSeatDragStart = (event: DragEvent, seat: SeatInfo) => {
  * 处理座位拖拽结束
  */
 const handleSeatDragEnd = (event: DragEvent) => {
+  // 全屏模式下禁用拖拽
+  if (isFullscreen.value) {
+    return
+  }
+  
   // 使用拖拽组合函数处理拖拽结束
   endDrag()
   
@@ -1048,6 +1191,11 @@ const handleSeatDragEnd = (event: DragEvent) => {
  * 处理座位拖拽悬停
  */
 const handleSeatDragOver = (event: DragEvent) => {
+  // 全屏模式下禁用拖拽
+  if (isFullscreen.value) {
+    return
+  }
+  
   event.preventDefault()
   
   // 使用拖拽组合函数处理拖拽悬停
@@ -1063,6 +1211,11 @@ const handleSeatDragOver = (event: DragEvent) => {
  * 处理座位拖拽离开
  */
 const handleSeatDragLeave = (event: DragEvent) => {
+  // 全屏模式下禁用拖拽
+  if (isFullscreen.value) {
+    return
+  }
+  
   // 使用拖拽组合函数处理拖拽离开
   dragHandleDragLeave('seat-target')
   
@@ -1076,6 +1229,11 @@ const handleSeatDragLeave = (event: DragEvent) => {
  * 处理座位拖拽放置
  */
 const handleSeatDrop = (event: DragEvent, targetSeat: SeatInfo) => {
+  // 全屏模式下禁用拖拽
+  if (isFullscreen.value) {
+    return
+  }
+  
   event.preventDefault()
   
   // 移除悬停样式
@@ -1114,6 +1272,20 @@ const handleSeatDrop = (event: DragEvent, targetSeat: SeatInfo) => {
   } else {
     console.warn('⚠️ 不支持的拖拽类型:', dragData.type)
   }
+}
+
+/**
+ * 处理座位鼠标进入事件
+ */
+const handleSeatMouseEnter = (event: MouseEvent, seat: SeatInfo) => {
+  // 如果鼠标移动到高亮的人员，清除高亮
+  if (seat.person && seat.person.id === highlightedPersonId.value) {
+    highlightedPersonId.value = null
+    console.log('🔄 清除高亮显示')
+  }
+  
+  // 显示提示框
+  showTooltip(event, seat)
 }
 
 /**
@@ -1199,6 +1371,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('mousemove', handleMouseMove)
+  // 确保退出时恢复页面滚动
+  document.body.style.overflow = ''
 })
 
 // ============ 人员选择浮窗处理 ============
@@ -1223,9 +1397,141 @@ const handlePersonSelection = (data: { person: PersonWithAssignment, seat: SeatI
   // 发送人员分配事件
   emit('person-assign', data)
 }
+
+// ============ 搜索处理 ============
+
+/**
+ * 处理搜索输入
+ */
+const handleSearch = async () => {
+  const query = searchQuery.value.trim()
+  
+  // 清除之前的定时器
+  if (searchTimeout !== null) {
+    clearTimeout(searchTimeout)
+  }
+  
+  // 如果搜索内容为空，清空结果
+  if (!query) {
+    searchResults.value = []
+    showSearchDropdown.value = false
+    return
+  }
+  
+  // 使用防抖，500ms后执行搜索
+  searchTimeout = window.setTimeout(async () => {
+    try {
+      searchLoading.value = true
+      showSearchDropdown.value = true
+      
+      const results = await searchPersons(query)
+      searchResults.value = results
+      
+      console.log(`🔍 搜索结果 "${query}":`, results.length, '条')
+    } catch (error) {
+      console.error('搜索人员失败:', error)
+      searchResults.value = []
+    } finally {
+      searchLoading.value = false
+    }
+  }, 300)
+}
+
+/**
+ * 处理搜索框失焦
+ */
+const handleSearchBlur = () => {
+  // 延迟关闭下拉框，确保点击事件能触发
+  setTimeout(() => {
+    showSearchDropdown.value = false
+  }, 200)
+}
+
+/**
+ * 处理选择人员
+ */
+const handleSelectPerson = (result: PersonSearchResult) => {
+  console.log(`✅ 选择人员：${result.name}`)
+  
+  // 如果人员在备选区（未分配座位），不做任何响应
+  if (!result.desk_number) {
+    console.log(`⚠️ ${result.name} - 在备选区，不响应`)
+    searchQuery.value = ''
+    searchResults.value = []
+    showSearchDropdown.value = false
+    return
+  }
+  
+  // 如果人员在座位上，滚动到对应桌位并高亮显示
+  console.log(`📍 ${result.name} - 桌号：${result.desk_number}`)
+  
+  // 设置高亮人员ID
+  highlightedPersonId.value = result.id
+  
+  // 等待下一帧确保DOM更新完成
+  nextTick(() => {
+    // 查找对应桌号的元素
+    const deskElements = document.querySelectorAll('.rectangular-desk-container')
+    const targetDeskElement = Array.from(deskElements).find(el => {
+      const deskLabel = el.querySelector('.desk-label')
+      return deskLabel?.textContent?.includes(`桌 ${result.desk_number}`)
+    })
+    
+    if (targetDeskElement) {
+      // 滚动到目标桌位（平滑滚动）
+      targetDeskElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      })
+      
+      console.log(`🎯 已滚动到桌号 ${result.desk_number}`)
+    } else {
+      console.warn(`⚠️ 未找到桌号 ${result.desk_number} 的元素`)
+    }
+  })
+  
+  // 清空搜索框
+  searchQuery.value = ''
+  searchResults.value = []
+  showSearchDropdown.value = false
+}
 </script>
 
 <style scoped>
+/* 全屏模式背景 */
+.fixed.inset-0 {
+  background-color: hsl(var(--background));
+}
+
+/* 全屏模式下的纯查看模式 */
+.fullscreen-view-mode {
+  cursor: default !important;
+}
+
+.fullscreen-view-mode:hover {
+  transform: scale(1.05);
+}
+
+.fullscreen-view-mode .seat-avatar {
+  cursor: default !important;
+}
+
+.fullscreen-view-mode .seat-avatar:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 全屏模式下禁用拖拽光标 */
+.fullscreen-view-mode[draggable="false"] .seat-avatar {
+  cursor: default !important;
+}
+
+.fullscreen-view-mode[draggable="false"]:active .seat-avatar {
+  cursor: default !important;
+  transform: none;
+}
+
 /* 座位区域滚动容器样式 */
 .seating-scroll-container {
   /* 自定义滚动条样式 */
@@ -1249,6 +1555,30 @@ const handlePersonSelection = (data: { person: PersonWithAssignment, seat: SeatI
 }
 
 .seating-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgb(148 163 184);
+}
+
+/* 搜索下拉框滚动条样式 */
+.max-h-80 {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) rgb(249 250 251);
+}
+
+.max-h-80::-webkit-scrollbar {
+  width: 6px;
+}
+
+.max-h-80::-webkit-scrollbar-track {
+  background: rgb(249 250 251);
+  border-radius: 3px;
+}
+
+.max-h-80::-webkit-scrollbar-thumb {
+  background: rgb(203 213 225);
+  border-radius: 3px;
+}
+
+.max-h-80::-webkit-scrollbar-thumb:hover {
   background: rgb(148 163 184);
 }
 
@@ -1425,6 +1755,24 @@ const handlePersonSelection = (data: { person: PersonWithAssignment, seat: SeatI
 .seat-avatar:hover {
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 高亮显示的人员（虚线方框） */
+.seat-avatar.highlighted-person {
+  border: 3px dashed #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+  animation: highlight-pulse 2s ease-in-out infinite;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
 }
 
 /* 头像容器 */

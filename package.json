@@ -28,13 +28,15 @@
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "vue": "^3.4.21",
-    "vue-sonner": "^1.1.0"
+    "vue-sonner": "^1.1.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.19.25",
     "@types/pg": "^8.11.6",
+    "@types/xlsx": "^0.0.35",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
     "@typescript-eslint/parser": "^7.13.0",
     "@vitejs/plugin-vue": "^5.0.4",

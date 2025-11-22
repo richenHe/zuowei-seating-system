@@ -102,7 +102,7 @@ zuowei-seating-system/
 项目会根据 `NODE_ENV` 环境变量自动选择数据库连接：
 
 - **开发/测试环境** (`NODE_ENV=development`):
-  - 数据库: `dbconn.sealoshzh.site:39174` (外网连接)
+  - 数据库: `dbconn.sealoshzh.site:40441` (外网连接)
   
 - **生产环境** (`NODE_ENV=production`):
   - 数据库: `zuowei-postgresql.ns-9z2wbi7z.svc:5432` (内网连接)

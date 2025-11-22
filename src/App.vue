@@ -76,12 +76,13 @@
             <FunctionsPanel
               :loading="loading"
               @show-message="handleShowMessage"
+              @import-success="handleImportSuccess"
             />
           </div>
         </div>
         
         <!-- 右侧：人员管理（占3列） -->
-        <div class="lg:col-span-3">
+        <div class="lg:col-span-3 flex">
           <PersonManager
           :persons="persons"
           :ambassadors="ambassadors"
@@ -1105,6 +1106,14 @@ const handleShowMessage = (type: 'success' | 'error', message: string) => {
     error.value = message
     successMessage.value = null
   }
+}
+
+/**
+ * 处理导入成功后的数据刷新
+ */
+const handleImportSuccess = async () => {
+  console.log('📥 导入成功，刷新数据...')
+  await loadAllData()
 }
 
 /**

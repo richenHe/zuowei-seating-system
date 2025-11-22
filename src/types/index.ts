@@ -146,3 +146,28 @@ export interface AmbassadorCreateRequest {
 export interface AmbassadorUpdateRequest {
   name?: string;                 // 大使姓名
 }
+
+// 批量导入相关类型
+export interface PersonImportRow {
+  name: string;                  // 姓名
+  position?: string;             // 职务（文本形式）
+  tel?: string;                  // 电话
+  background?: string;           // 背景
+  ambassador_name?: string;      // 传播大使姓名
+  info?: string;                 // 其他信息
+}
+
+export interface PersonImportValidationError {
+  row: number;                   // 行号（从1开始，Excel中的实际行号）
+  field: string;                 // 字段名
+  message: string;               // 错误信息
+}
+
+export interface PersonImportResult {
+  total: number;                 // 总行数
+  success: number;               // 成功导入数量
+  skipped: number;               // 跳过数量（重复）
+  failed: number;                // 失败数量
+  errors: PersonImportValidationError[]; // 错误列表
+  message: string;               // 结果消息
+}

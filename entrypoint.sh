@@ -59,7 +59,7 @@ fi
 if [ "$ENV_MODE" = "development" ]; then
     export NODE_ENV=development
     echo "🔧 运行模式: 开发/测试环境"
-    echo "📊 数据库将连接: dbconn.sealoshzh.site:39174"
+    echo "📊 数据库将连接: dbconn.sealoshzh.site:40441"
 else
     export NODE_ENV=production
     echo "🔧 运行模式: 生产环境"

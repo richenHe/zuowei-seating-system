@@ -10,7 +10,7 @@
 
 | 环境 | NODE_ENV | 数据库地址 | 端口 | 说明 |
 |------|----------|-----------|------|------|
-| **开发/测试** | `development` | `dbconn.sealoshzh.site` | `39174` | 外网连接，用于本地开发或测试 |
+| **开发/测试** | `development` | `dbconn.sealoshzh.site` | `40441` | 外网连接，用于本地开发或测试 |
 | **生产** | `production` | `zuowei-postgresql.ns-9z2wbi7z.svc` | `5432` | 内网连接，用于生产环境 |
 
 ## 🧪 测试环境部署
@@ -42,7 +42,7 @@ NODE_ENV=development node dist-server/server/index.js
 启动后查看日志，应该看到：
 ```
 🌍 当前环境: 开发环境
-📊 数据库连接: dbconn.sealoshzh.site:39174
+📊 数据库连接: dbconn.sealoshzh.site:40441
 ```
 
 ## 🚀 生产环境部署（Sealos）
@@ -96,7 +96,7 @@ APP_VERSION=1.0.0
 
 ### 测试环境
 - [ ] `NODE_ENV=development` 已设置
-- [ ] 日志显示连接 `dbconn.sealoshzh.site:39174`
+- [ ] 日志显示连接 `dbconn.sealoshzh.site:40441`
 - [ ] 数据库连接成功
 - [ ] 应用可以正常访问
 

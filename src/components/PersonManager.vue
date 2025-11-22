@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-card rounded-lg border border-border p-6 shadow-sm">
+  <div class="bg-card rounded-lg border border-border p-6 shadow-sm flex-1 flex flex-col">
     <!-- 标题 -->
     <div class="flex items-center space-x-2 mb-6">
       <div class="text-lg">👥</div>
@@ -7,7 +7,7 @@
     </div>
 
     <!-- 左右两栏布局 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
       
       <!-- 左侧：添加人员按钮 + 人员列表 -->
       <div class="space-y-6">

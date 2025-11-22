@@ -13,7 +13,9 @@ import type {
   Ambassador,
   AmbassadorCreateRequest,
   AmbassadorUpdateRequest,
-  ApiResponse
+  ApiResponse,
+  PersonImportRow,
+  PersonImportResult
 } from '@/types';
 
 // 创建axios实例
@@ -42,7 +44,10 @@ api.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     // 检查业务逻辑错误
     if (!response.data.success) {
-      throw new Error(response.data.error || '请求失败');
+      // 创建一个包含完整响应数据的错误对象
+      const error: any = new Error(response.data.error || '请求失败');
+      error.response = response;
+      throw error;
     }
     return response;
   },
@@ -72,7 +77,11 @@ api.interceptors.response.use(
         message = data?.error || `HTTP错误 ${status}`;
     }
     
-    throw new Error(message);
+    // 创建包含完整响应数据的错误对象
+    const newError: any = new Error(message);
+    newError.response = error.response;
+    newError.status = status;
+    throw newError;
   }
 );
 
@@ -135,6 +144,46 @@ export const batchDeletePersons = async (person_ids: number[]): Promise<string> 
     data: { person_ids }
   });
   return response.data.message || '批量删除成功';
+};
+
+/**
+ * 批量导入人员
+ */
+export const batchImportPersons = async (data: PersonImportRow[]): Promise<PersonImportResult> => {
+  try {
+    const response = await api.post<ApiResponse<PersonImportResult>>('/persons/batch-import', { data });
+    return response.data.data!;
+  } catch (error: any) {
+    console.log('📦 批量导入错误对象:', error);
+    console.log('📦 错误响应数据:', error.response?.data);
+    
+    // 如果是验证错误（400），并且响应中包含结果数据，返回结果数据
+    if (error.response && error.response.data && error.response.data.data) {
+      const result = error.response.data.data as PersonImportResult;
+      console.log('✅ 返回验证结果:', result);
+      return result;
+    }
+    
+    // 其他错误继续抛出
+    throw error;
+  }
+};
+
+/**
+ * 模糊查询人员（返回姓名和桌号）
+ */
+export interface PersonSearchResult {
+  id: number;
+  name: string;
+  desk_number: number | null;
+  seat_number: number | null;
+}
+
+export const searchPersons = async (query: string): Promise<PersonSearchResult[]> => {
+  const response = await api.get<ApiResponse<PersonSearchResult[]>>('/persons/search', {
+    params: { query }
+  });
+  return response.data.data!;
 };
 
 // ============ 座位分配相关API ============
