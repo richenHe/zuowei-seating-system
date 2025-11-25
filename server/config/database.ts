@@ -99,6 +99,7 @@ export async function initializeDatabase(): Promise<void> {
       CREATE TABLE IF NOT EXISTS persons (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
+        student_category INTEGER,
         ambassador_id INTEGER REFERENCES ambassadors(id) ON DELETE SET NULL,
         position INTEGER,
         tel VARCHAR(30),
@@ -150,6 +151,15 @@ export async function initializeDatabase(): Promise<void> {
       `);
     } catch (error) {
       console.log('✅ background字段检查完成');
+    }
+
+    // 检查并添加student_category字段（如果不存在）
+    try {
+      await client.query(`
+        ALTER TABLE persons ADD COLUMN IF NOT EXISTS student_category INTEGER
+      `);
+    } catch (error) {
+      console.log('✅ student_category字段检查完成');
     }
     console.log('✅ persons表创建/检查完成');
 

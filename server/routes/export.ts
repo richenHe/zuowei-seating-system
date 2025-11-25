@@ -15,6 +15,7 @@ router.post('/desk-students-word', async (req, res) => {
         sa.seat_number,
         p.name,
         p.position,
+        p.student_category,
         p.tel,
         p.background,
         p.info,
@@ -81,11 +82,20 @@ router.post('/desk-students-word', async (req, res) => {
         })
       );
 
+      // 学员分类映射
+      const studentCategoryNames: { [key: number]: string } = {
+        1: '新学员',
+        2: '复训未上密训学员',
+        3: '密训班学员',
+        4: '传播大使'
+      };
+
       // 为每个学员添加信息
       for (let j = 0; j < students.length; j++) {
         const student = students[j];
+        const categoryLabel = student.student_category ? studentCategoryNames[student.student_category] || '' : '';
         
-        // 学员姓名（加大字体，加粗）
+        // 学员姓名和学员分类（加大字体，加粗）
         children.push(
           new docx.Paragraph({
             children: [
@@ -94,6 +104,15 @@ router.post('/desk-students-word', async (req, res) => {
                 bold: true,
                 size: 32, // 16pt，比之前更大
               }),
+              ...(categoryLabel
+                ? [
+                    new docx.TextRun({
+                      text: '    ' + categoryLabel,
+                      bold: true,
+                      size: 32,
+                    }),
+                  ]
+                : []),
             ],
             spacing: {
               before: 300, // 增加上方间距

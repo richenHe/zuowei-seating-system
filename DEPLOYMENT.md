@@ -13,13 +13,13 @@
 | **开发/测试** | `development` | `dbconn.sealoshzh.site` | `40441` | 外网连接，用于本地开发或测试 |
 | **生产** | `production` | `zuowei-postgresql.ns-9z2wbi7z.svc` | `5432` | 内网连接，用于生产环境 |
 
-## 🧪 测试环境部署
+## 🧪 测试环境部署(远程)
 
 ### 方式1: 使用启动脚本（推荐）
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/richenHe/zuowei-seating-system.git
+git pull origin main
 cd zuowei-seating-system
 
 # 2. 构建项目
@@ -27,14 +27,14 @@ npm install
 npm run build
 
 # 3. 启动测试环境
-bash entrypoint.sh development
+bash entrypoint.sh production
 ```
 
 ### 方式2: 直接启动
 
 ```bash
 # 设置环境变量并启动
-NODE_ENV=development node dist-server/server/index.js
+NODE_ENV=production node dist-server/server/index.js
 ```
 
 ### 验证测试环境

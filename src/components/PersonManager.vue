@@ -276,7 +276,7 @@
             <div class="space-y-4">
               <h5 class="text-md font-medium text-foreground border-b border-border pb-2">📝 基本信息</h5>
               
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- 姓名 -->
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-foreground">
@@ -320,10 +320,30 @@
                     {{ errors.position }}
                   </div>
                 </div>
+
+                <!-- 学员分类 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    学员分类 <span class="text-destructive">*</span>
+                  </label>
+                  <select
+                    v-model="formData.student_category"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                  >
+                    <option :value="undefined">请选择学员分类</option>
+                    <option v-for="option in studentCategoryOptions" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <div v-if="errors.student_category" class="text-xs text-destructive">
+                    {{ errors.student_category }}
+                  </div>
+                </div>
               </div>
 
               <!-- 联系信息 -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- 电话 -->
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-foreground">
@@ -673,6 +693,26 @@
                   </select>
                   <div v-if="editErrors.position" class="text-xs text-destructive">
                     {{ editErrors.position }}
+                  </div>
+                </div>
+
+                <!-- 学员分类 -->
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-foreground">
+                    学员分类 <span class="text-destructive">*</span>
+                  </label>
+                  <select
+                    v-model="editForm.student_category"
+                    :disabled="loading"
+                    class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent disabled:opacity-50"
+                  >
+                    <option :value="undefined">请选择学员分类</option>
+                    <option v-for="option in studentCategoryOptions" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <div v-if="editErrors.student_category" class="text-xs text-destructive">
+                    {{ editErrors.student_category }}
                   </div>
                 </div>
               </div>
@@ -1265,6 +1305,7 @@ const formData = reactive<PersonCreateRequest>({
   name: '',
   ambassador_id: undefined,
   position: undefined,
+  student_category: undefined,
   tel: '',
   background: '',
   info: ''
@@ -1276,6 +1317,7 @@ const editForm = reactive<PersonUpdateRequest>({
   name: '',
   ambassador_id: undefined,
   position: undefined,
+  student_category: undefined,
   tel: '',
   background: '',
   info: ''
@@ -1327,6 +1369,7 @@ const isFormValid = computed(() => {
   return trimmedName.length > 0 && 
          trimmedName.length <= 100 &&
          formData.position !== undefined && // 职务必填
+         formData.student_category !== undefined && // 学员分类必填
          (!formData.tel || formData.tel.trim().length <= 30) &&
          (!formData.background || formData.background.trim().length <= 255) &&
          (!formData.info || formData.info.length <= 500)
@@ -1364,6 +1407,7 @@ const isEditFormValid = computed(() => {
          trimmedName.length > 0 && 
          trimmedName.length <= 100 &&
          editForm.position !== undefined && // 职务必填
+         editForm.student_category !== undefined && // 学员分类必填
          (!editForm.tel || editForm.tel.trim().length <= 30) &&
          (!editForm.background || editForm.background.trim().length <= 255) &&
          (!editForm.info || editForm.info.length <= 500)
@@ -1376,6 +1420,14 @@ const positionOptions = [
   { value: 3, label: '组长' },
   { value: 4, label: '副组长' },
   { value: 5, label: '学员' }
+]
+
+// 学员分类选项
+const studentCategoryOptions = [
+  { value: 1, label: '新学员' },
+  { value: 2, label: '复训未上密训学员' },
+  { value: 3, label: '密训班学员' },
+  { value: 4, label: '传播大使' }
 ]
 
 // 根据职务数字获取职务名称
@@ -1545,6 +1597,12 @@ const handleAddPerson = () => {
     errors.position = '职务不能为空，请选择职务'
     return
   }
+
+  // 验证学员分类
+  if (formData.student_category === undefined) {
+    errors.student_category = '学员分类不能为空，请选择学员分类'
+    return
+  }
   
   // 检查姓名唯一性
   const trimmedName = formData.name.trim()
@@ -1579,6 +1637,7 @@ const handleAddPerson = () => {
     name: trimmedName,
     ambassador_id: formData.ambassador_id === undefined ? null : formData.ambassador_id,
     position: formData.position,
+    student_category: formData.student_category,
     tel: formData.tel?.trim() || '',
     background: formData.background?.trim() || '',
     info: formData.info?.trim() || ''
@@ -1597,6 +1656,7 @@ const startEdit = (person: PersonWithAssignment) => {
   editForm.name = person.name
   editForm.ambassador_id = person.ambassador_id ?? undefined
   editForm.position = person.position
+  editForm.student_category = person.student_category
   editForm.tel = person.tel || ''
   editForm.background = person.background || ''
   editForm.info = person.info || ''
@@ -1627,6 +1687,12 @@ const handleUpdatePerson = () => {
   // 验证职务
   if (editForm.position === undefined) {
     editErrors.position = '职务不能为空，请选择职务'
+    return
+  }
+
+  // 验证学员分类
+  if (editForm.student_category === undefined) {
+    editErrors.student_category = '学员分类不能为空，请选择学员分类'
     return
   }
   
@@ -1663,6 +1729,7 @@ const handleUpdatePerson = () => {
     name: trimmedName,
     ambassador_id: editForm.ambassador_id === undefined ? null : editForm.ambassador_id,
     position: editForm.position,
+    student_category: editForm.student_category,
     tel: editForm.tel?.trim() || '',
     background: editForm.background?.trim() || '',
     info: editForm.info?.trim() || ''
@@ -1679,6 +1746,7 @@ const cancelEdit = () => {
   editForm.name = ''
   editForm.ambassador_id = undefined
   editForm.position = undefined
+  editForm.student_category = undefined
   editForm.tel = ''
   editForm.background = ''
   editForm.info = ''
@@ -1700,6 +1768,7 @@ const resetForm = () => {
   formData.name = ''
   formData.ambassador_id = undefined
   formData.position = undefined
+  formData.student_category = undefined
   formData.tel = ''
   formData.background = ''
   formData.info = ''

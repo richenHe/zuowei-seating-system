@@ -17,6 +17,7 @@ router.get('/', async (req, res) => {
         p.name,
         p.ambassador_id,
         p.position,
+        p.student_category,
         p.tel,
         p.background,
         p.info,
@@ -71,6 +72,7 @@ router.get('/layout', async (req, res) => {
         p.name,
         p.ambassador_id,
         p.position,
+        p.student_category,
         p.tel,
         p.background,
         p.info,
@@ -109,6 +111,7 @@ router.get('/layout', async (req, res) => {
             name: assignment.name,
             ambassador_id: assignment.ambassador_id,
             position: assignment.position,
+            student_category: assignment.student_category,
             tel: assignment.tel,
             background: assignment.background,
             info: assignment.info,
@@ -127,7 +130,7 @@ router.get('/layout', async (req, res) => {
 
     // 获取备选区人员（没有有效座位分配的人员）
     const waitingResult = await pool.query(`
-      SELECT p.id, p.name, p.ambassador_id, p.position, p.tel, p.background, p.info, p.created_at,
+      SELECT p.id, p.name, p.ambassador_id, p.position, p.student_category, p.tel, p.background, p.info, p.created_at,
              a.name as ambassador_name
       FROM persons p
       LEFT JOIN seat_assignments sa ON p.id = sa.person_id

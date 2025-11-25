@@ -711,6 +711,9 @@
       :style="tooltipStyle"
     >
       <div v-if="tooltipData">
+        <div v-if="tooltipData.person?.student_category" class="font-bold text-lg mb-1">
+          {{ getStudentCategoryLabel(tooltipData.person.student_category) }}
+        </div>
         <div class="font-semibold text-lg mb-1">{{ tooltipData.person?.name || '空座位' }}</div>
         <div v-if="tooltipData.person?.student_id" class="opacity-80 text-base mb-1">
           学号：{{ tooltipData.person.student_id }}
@@ -818,6 +821,19 @@ const getPositionColor = (position?: number): string => {
  */
 const shouldShowPositionTag = (position?: number): boolean => {
   return position !== undefined && position !== 5 && position >= 1 && position <= 4
+}
+
+/**
+ * 学员分类文本
+ */
+const getStudentCategoryLabel = (category?: number): string => {
+  switch (category) {
+    case 1: return '新学员'
+    case 2: return '复训未上密训学员'
+    case 3: return '密训班学员'
+    case 4: return '传播大使'
+    default: return ''
+  }
 }
 
 // ============ Emits ============

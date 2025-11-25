@@ -16,6 +16,7 @@ export interface Person {
   name: string;                  // 姓名
   ambassador_id?: number;        // 传播大使ID（可选）
   position?: number;             // 职务：1辅导员 2助攻手 3组长 4副组长 5学员
+  student_category?: number;     // 学员分类：1新学员 2复训未上密训学员 3密训班学员 4传播大使
   tel?: string;                  // 电话
   background?: string;           // 背景
   info?: string;                 // 其他信息
@@ -41,6 +42,7 @@ export interface PersonCreateRequest {
   name: string;                  // 姓名
   ambassador_id?: number | null; // 传播大使ID (null表示无传播大使)
   position?: number;             // 职务：1辅导员 2助攻手 3组长 4副组长 5学员
+  student_category?: number;     // 学员分类：1新学员 2复训未上密训学员 3密训班学员 4传播大使
   tel?: string;                  // 电话
   background?: string;           // 背景
   info?: string;                 // 其他信息
@@ -50,6 +52,7 @@ export interface PersonUpdateRequest {
   name?: string;                 // 姓名
   ambassador_id?: number | null; // 传播大使ID (null表示无传播大使)
   position?: number;             // 职务：1辅导员 2助攻手 3组长 4副组长 5学员
+  student_category?: number;     // 学员分类：1新学员 2复训未上密训学员 3密训班学员 4传播大使
   tel?: string;                  // 电话
   background?: string;           // 背景
   info?: string;                 // 其他信息
@@ -154,6 +157,7 @@ export interface PersonImportRow {
   tel?: string;                  // 电话
   background?: string;           // 背景
   ambassador_name?: string;      // 传播大使姓名
+  student_category?: string;     // 学员分类（文本形式）
   info?: string;                 // 其他信息
 }
 

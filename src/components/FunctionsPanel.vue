@@ -315,7 +315,7 @@ const handleImportFile = async (file: File) => {
     
     // 验证必需的列是否存在
     const firstRow = jsonData[0];
-    const requiredColumns = ['姓名', '职务', '传播大使'];
+    const requiredColumns = ['姓名', '职务', '传播大使', '学员分类'];
     const missingColumns = requiredColumns.filter(col => !(col in firstRow));
     
     if (missingColumns.length > 0) {
@@ -337,6 +337,7 @@ const handleImportFile = async (file: File) => {
         tel: getCellValue(row['电话']),
         background: getCellValue(row['背景']),
         ambassador_name: getCellValue(row['传播大使']),
+        student_category: getCellValue(row['学员分类']),
         info: getCellValue(row['其他信息'])
       };
     });

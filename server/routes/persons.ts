@@ -8,7 +8,7 @@ const router = Router();
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT p.id, p.name, p.ambassador_id, p.position, p.tel, p.background, p.info, p.created_at,
+      SELECT p.id, p.name, p.ambassador_id, p.position, p.student_category, p.tel, p.background, p.info, p.created_at,
              a.name as ambassador_name, sa.desk_number, sa.seat_number
       FROM persons p
       LEFT JOIN ambassadors a ON p.ambassador_id = a.id
@@ -85,7 +85,7 @@ router.get('/search', async (req, res) => {
 // POST /api/persons - 添加人员
 router.post('/', async (req, res) => {
   try {
-    const { name, ambassador_id, position, tel, background, info }: PersonCreateRequest = req.body;
+    const { name, ambassador_id, position, student_category, tel, background, info }: PersonCreateRequest = req.body;
 
     // 参数验证
     if (!name || name.trim().length === 0) {
@@ -138,15 +138,33 @@ router.post('/', async (req, res) => {
       }
     }
 
+    // 验证学员分类（必填）
+    if (student_category === undefined || student_category === null) {
+      const response: ApiResponse = {
+        success: false,
+        error: '学员分类不能为空'
+      };
+      return res.status(400).json(response);
+    }
+
+    if (![1, 2, 3, 4].includes(student_category)) {
+      const response: ApiResponse = {
+        success: false,
+        error: '学员分类无效，必须是1-4之间的数字'
+      };
+      return res.status(400).json(response);
+    }
+
     // 插入新人员
     const result = await pool.query(`
-      INSERT INTO persons (name, ambassador_id, position, tel, background, info, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+      INSERT INTO persons (name, ambassador_id, position, student_category, tel, background, info, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
       RETURNING *
     `, [
       name.trim(), 
       ambassador_id || null, 
-      position || null, 
+      position || null,
+      student_category ?? null,
       tel?.trim() || null, 
       background?.trim() || null, 
       info?.trim() || null
@@ -174,7 +192,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const personId = parseInt(req.params.id);
-    const { name, ambassador_id, position, tel, background, info }: PersonUpdateRequest = req.body;
+    const { name, ambassador_id, position, student_category, tel, background, info }: PersonUpdateRequest = req.body;
 
     // 参数验证
     if (isNaN(personId)) {
@@ -249,6 +267,19 @@ router.put('/:id', async (req, res) => {
     if (position !== undefined) {
       updateFields.push(`position = $${paramIndex}`);
       values.push(position || null);
+      paramIndex++;
+    }
+
+    if (student_category !== undefined) {
+      if (student_category !== null && ![1, 2, 3, 4].includes(student_category)) {
+        const response: ApiResponse = {
+          success: false,
+          error: '学员分类无效，必须是1-4之间的数字'
+        };
+        return res.status(400).json(response);
+      }
+      updateFields.push(`student_category = $${paramIndex}`);
+      values.push(student_category ?? null);
       paramIndex++;
     }
 
@@ -353,9 +384,17 @@ router.post('/batch-import', async (req, res) => {
       '学员': 5
     };
 
-    // 验证阶段
+    // 职务映射表
     const errors: PersonImportValidationError[] = [];
     const validRows: Array<{ row: number; data: PersonImportRow }> = [];
+
+    // 学员分类映射表
+    const studentCategoryMap: Record<string, number> = {
+      '新学员': 1,
+      '复训未上密训学员': 2,
+      '密训班学员': 3,
+      '传播大使': 4
+    };
 
     // 获取现有人员姓名（用于去重）
     const existingPersonsResult = await client.query('SELECT name FROM persons');
@@ -414,6 +453,23 @@ router.post('/batch-import', async (req, res) => {
           row: rowNumber,
           field: '传播大使',
           message: `第${rowNumber}行（${row.name}）：传播大使姓名长度不能超过100个字符`
+        });
+        hasError = true;
+      }
+
+      // 验证学员分类
+      if (!row.student_category || row.student_category.trim().length === 0) {
+        errors.push({
+          row: rowNumber,
+          field: '学员分类',
+          message: `第${rowNumber}行（${row.name}）：学员分类为空，需要添加`
+        });
+        hasError = true;
+      } else if (!studentCategoryMap[row.student_category.trim()]) {
+        errors.push({
+          row: rowNumber,
+          field: '学员分类',
+          message: `第${rowNumber}行（${row.name}）：学员分类"${row.student_category}"无效，必须是：新学员、复训未上密训学员、密训班学员、传播大使`
         });
         hasError = true;
       }
@@ -491,6 +547,7 @@ router.post('/batch-import', async (req, res) => {
 
         const ambassadorName = rowData.ambassador_name!.trim();
         const positionValue = positionMap[rowData.position!.trim()];
+        const studentCategoryValue = studentCategoryMap[rowData.student_category!.trim()];
 
         // 查询或创建传播大使
         let ambassadorId: number;
@@ -513,12 +570,13 @@ router.post('/batch-import', async (req, res) => {
 
         // 插入人员
         await client.query(
-          `INSERT INTO persons (name, ambassador_id, position, tel, background, info, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
+          `INSERT INTO persons (name, ambassador_id, position, student_category, tel, background, info, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
           [
             trimmedName,
             ambassadorId,
             positionValue,
+            studentCategoryValue,
             rowData.tel?.trim() || null,
             rowData.background?.trim() || null,
             rowData.info?.trim() || null
