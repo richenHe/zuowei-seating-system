@@ -486,7 +486,7 @@
               <input
                 v-model="searchQuery"
                 type="text"
-                  placeholder="搜索人员姓名或传播大使..."
+                placeholder="搜索人员姓名..."
                 class="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
@@ -1456,10 +1456,9 @@ const filteredPersons = computed(() => {
     return props.persons
   }
   
-          const query = searchQuery.value.trim().toLowerCase()
+  const query = searchQuery.value.trim().toLowerCase()
   return props.persons.filter(person => 
-    person.name.toLowerCase().includes(query) ||
-    (person.ambassador_name && person.ambassador_name.toLowerCase().includes(query))
+    person.name.toLowerCase().includes(query)
   )
 })
 
